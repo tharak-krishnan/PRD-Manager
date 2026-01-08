@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useData } from '../context/DataContext';
-import { PlusIcon, FolderIcon, BarChartIcon } from 'lucide-react';
+import { PlusIcon, FolderIcon, BarChartIcon, HelpCircle } from 'lucide-react';
 const Sidebar: React.FC = () => {
   const {
     categories,
@@ -68,11 +69,15 @@ const Sidebar: React.FC = () => {
             </li>)}
         </ul>
       </div>
-      <div className="mt-4 pt-4 border-t border-gray-700">
+      <div className="mt-4 pt-4 border-t border-gray-700 space-y-1">
         <button onClick={handleShowRoadmap} className={`w-full text-left px-3 py-2 rounded-md flex items-center transition-colors ${showRoadmap ? 'bg-blue-900/50 text-blue-400' : 'text-gray-300 hover:bg-gray-700'}`}>
           <BarChartIcon size={18} className="mr-2" />
           <span>Roadmap</span>
         </button>
+        <Link to="/help" className="w-full text-left px-3 py-2 rounded-md flex items-center transition-colors text-gray-300 hover:bg-gray-700 block">
+          <HelpCircle size={18} className="mr-2" />
+          <span>Help</span>
+        </Link>
       </div>
     </div>;
 };
