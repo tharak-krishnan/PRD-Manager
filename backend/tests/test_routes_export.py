@@ -96,7 +96,6 @@ class TestExportRoutes:
 class TestImportRoutes:
     """Functional tests for import routes"""
 
-    @pytest.mark.skip(reason="Complex import test - needs investigation")
     def test_import_prd_excel_success(self, client, auth_headers, category_with_features):
         """Test importing PRD from Excel"""
         from app import db
@@ -117,6 +116,10 @@ class TestImportRoutes:
             data={'file': (BytesIO(excel_data), 'test.xlsx')},
             content_type='multipart/form-data'
         )
+
+        if response.status_code != 200:
+            print(f"Import failed with status {response.status_code}")
+            print(f"Response: {response.get_json()}")
 
         assert response.status_code == 200
         assert 'categories_imported' in response.json

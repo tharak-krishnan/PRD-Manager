@@ -10,6 +10,18 @@ from io import BytesIO
 
 export_bp = Blueprint('export', __name__)
 
+def parse_release_date(date_str):
+    """Convert 'January 2024' format back to '2024-01' format"""
+    if not date_str:
+        return None
+    try:
+        # Try parsing as "Month Year" format
+        date_obj = datetime.strptime(date_str, '%B %Y')
+        return date_obj.strftime('%Y-%m')
+    except:
+        # Already in correct format or invalid
+        return date_str
+
 
 @export_bp.route('/export/roadmap/pptx', methods=['POST'])
 @jwt_required()
@@ -145,7 +157,7 @@ def import_prd_excel():
         imported_features = 0
 
         for sheet_name in wb.sheetnames:
-            if sheet_name == 'Summary':
+            if sheet_name in ['Summary', 'PRD Summary']:
                 continue
 
             sheet = wb[sheet_name]
@@ -164,8 +176,8 @@ def import_prd_excel():
                 category.description = category_description
                 db.session.add(category)
 
-            # Read features from row 4 onwards (row 3 is header)
-            row_num = 4
+            # Read features from row 5 onwards (row 4 is header, row 5 is first data row)
+            row_num = 5
             while True:
                 feature_id = sheet.cell(row=row_num, column=1).value
 
@@ -188,7 +200,7 @@ def import_prd_excel():
                 release_date = None
                 if release_date_val:
                     if isinstance(release_date_val, str):
-                        release_date = release_date_val
+                        release_date = parse_release_date(release_date_val)
                     else:
                         # If it's a datetime object, format it
                         try:
