@@ -138,6 +138,28 @@ const FeatureTable: React.FC<FeatureTableProps> = ({ categoryId }) => {
     Low: 'bg-green-900/50 text-green-400 border border-green-700/50',
   };
 
+  const complexityColorMap: Record<TShirtSize, string> = {
+    XS: 'bg-green-900/40 text-green-400 border border-green-700/40',
+    S: 'bg-blue-900/40 text-blue-400 border border-blue-700/40',
+    M: 'bg-yellow-900/40 text-yellow-400 border border-yellow-700/40',
+    L: 'bg-orange-900/40 text-orange-400 border border-orange-700/40',
+    XL: 'bg-red-900/40 text-red-400 border border-red-700/40',
+  };
+
+  const getSignoffBadge = (signedOff: boolean) => {
+    return signedOff ? (
+      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-green-900/40 text-green-400 border border-green-700/40">
+        <CheckIcon size={12} className="mr-1" />
+        Signed Off
+      </span>
+    ) : (
+      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-gray-700 text-gray-400 border border-gray-600">
+        <XIcon size={12} className="mr-1" />
+        Pending
+      </span>
+    );
+  };
+
   const getFieldClassName = (fieldName: string, baseClass: string): string => {
     const disabled = isFieldDisabled(fieldName);
     return `${baseClass} ${
@@ -486,17 +508,17 @@ const FeatureTable: React.FC<FeatureTableProps> = ({ categoryId }) => {
                             <span className="text-gray-500 uppercase text-[10px] block mb-1">
                               Signoff
                             </span>
-                            {feature.engineeringSignoff ? (
-                              <CheckIcon size={14} className="text-green-400" />
-                            ) : (
-                              <XIcon size={14} className="text-red-400" />
-                            )}
+                            {getSignoffBadge(feature.engineeringSignoff)}
                           </div>
                           <div>
                             <span className="text-gray-500 uppercase text-[10px] block mb-1">
                               Complexity
                             </span>
-                            <span className="text-gray-300">{feature.engineeringComplexity}</span>
+                            <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
+                              complexityColorMap[feature.engineeringComplexity]
+                            }`}>
+                              {feature.engineeringComplexity}
+                            </span>
                           </div>
                           {feature.assignedEngineerId && (
                             <div>
