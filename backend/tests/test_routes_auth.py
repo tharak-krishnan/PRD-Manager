@@ -94,3 +94,39 @@ class TestAuthRoutes:
         response = client.get('/api/auth/me')
 
         assert response.status_code == 401
+
+    def test_register_database_error(self, client, mocker):
+        """Test registration with database error"""
+        # Mock create_user to raise an exception
+        mocker.patch('app.services.AuthService.create_user', side_effect=Exception('Database error'))
+
+        response = client.post('/api/auth/register', json={
+            'username': 'newuser',
+            'email': 'newuser@example.com',
+            'password': 'password123'
+        })
+
+        assert response.status_code == 500
+        assert 'error' in response.json
+
+    def test_login_missing_credentials(self, client):
+        """Test login with missing credentials"""
+        response = client.post('/api/auth/login', json={
+            'username': 'testuser'
+        })
+
+        assert response.status_code == 400
+        assert 'error' in response.json
+
+    def test_get_current_user_not_found(self, client, mocker):
+        """Test getting current user when user not found in database"""
+        from flask_jwt_extended import create_access_token
+
+        # Create a token for a non-existent user
+        access_token = create_access_token(identity='999999')
+        headers = {'Authorization': f'Bearer {access_token}'}
+
+        response = client.get('/api/auth/me', headers=headers)
+
+        assert response.status_code == 404
+        assert 'error' in response.json

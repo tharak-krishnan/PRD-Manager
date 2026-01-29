@@ -45,19 +45,65 @@ export const mockFeatures = [
   },
 ];
 
+// Mock user
+export const mockUser = {
+  id: 1,
+  username: 'testuser',
+  email: 'test@example.com',
+};
+
 // Custom render function with providers
 interface CustomRenderOptions extends Omit<RenderOptions, 'wrapper'> {
   initialCategories?: any[];
+  authValue?: any;
+  dataValue?: any;
 }
 
 export function renderWithProviders(
   ui: ReactElement,
-  { initialCategories = mockCategories, ...renderOptions }: CustomRenderOptions = {}
+  {
+    initialCategories = mockCategories,
+    authValue,
+    dataValue,
+    ...renderOptions
+  }: CustomRenderOptions = {}
 ) {
+  // Default auth context value
+  const defaultAuthValue = {
+    user: null,
+    login: async () => {},
+    logout: () => {},
+    register: async () => {},
+    isAuthenticated: false,
+    isLoading: false,
+  };
+
+  // Default data context value
+  const defaultDataValue = {
+    categories: initialCategories,
+    selectedCategoryId: null,
+    addCategory: async () => {},
+    updateCategory: async () => {},
+    deleteCategory: async () => {},
+    selectCategory: () => {},
+    addFeature: async () => {},
+    updateFeature: async () => {},
+    deleteFeature: async () => {},
+    isLoading: false,
+    refreshCategories: async () => {},
+  };
+
+  const AuthContext = React.createContext(authValue || defaultAuthValue);
+  const DataContext = React.createContext(dataValue || defaultDataValue);
+
   function Wrapper({ children }: { children: React.ReactNode }) {
     return (
       <BrowserRouter>
-        {children}
+        <AuthContext.Provider value={authValue || defaultAuthValue}>
+          <DataContext.Provider value={dataValue || defaultDataValue}>
+            {children}
+          </DataContext.Provider>
+        </AuthContext.Provider>
       </BrowserRouter>
     );
   }
