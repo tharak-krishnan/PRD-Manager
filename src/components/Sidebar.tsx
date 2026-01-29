@@ -3,9 +3,15 @@ import { Link } from 'react-router-dom';
 import { useData } from '../context/DataContext';
 import { useAuth } from '../context/AuthContext';
 import { canManageUsers } from '../utils/permissions';
-import { PlusIcon, FolderIcon, BarChartIcon, HelpCircle, ChevronLeft, ChevronRight, Users, LogOut } from 'lucide-react';
+import { PlusIcon, FolderIcon, BarChartIcon, HelpCircle, ChevronLeft, ChevronRight, Users, LogOut, Menu, X } from 'lucide-react';
 import ProjectSelector from './ProjectSelector';
-const Sidebar: React.FC = () => {
+
+interface SidebarProps {
+  isOpen?: boolean;
+  onClose?: () => void;
+}
+
+const Sidebar: React.FC<SidebarProps> = ({ isOpen = true, onClose }) => {
   const {
     selectedProjectId,
     categories,
@@ -29,14 +35,6 @@ const Sidebar: React.FC = () => {
       setIsAddingCategory(false);
     }
   };
-  const handleSelectCategory = (id: string) => {
-    selectCategory(id);
-    setShowRoadmap(false);
-  };
-  const handleShowRoadmap = () => {
-    setShowRoadmap(true);
-    selectCategory(null);
-  };
 
   // Pagination logic
   const totalCategories = categories.length;
@@ -50,9 +48,56 @@ const Sidebar: React.FC = () => {
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
   };
-  return <div className="w-64 h-full bg-gray-800 border-r border-gray-700 p-4 flex flex-col">
+
+  const handleSelectCategory = (id: string) => {
+    selectCategory(id);
+    setShowRoadmap(false);
+    // Close mobile menu when selecting a category
+    if (onClose) onClose();
+  };
+
+  const handleShowRoadmap = () => {
+    setShowRoadmap(true);
+    selectCategory(null);
+    // Close mobile menu when showing roadmap
+    if (onClose) onClose();
+  };
+
+  return (
+    <>
+      {/* Mobile overlay */}
+      {isOpen && onClose && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+          onClick={onClose}
+          aria-hidden="true"
+        />
+      )}
+
+      {/* Sidebar */}
+      <aside
+        className={`
+          fixed lg:static inset-y-0 left-0 z-50
+          w-64 h-full bg-gray-800 border-r border-gray-700 p-4 flex flex-col
+          transform transition-transform duration-300 ease-in-out lg:transform-none
+          ${isOpen ? 'translate-x-0' : '-translate-x-full'}
+        `}
+        aria-label="Main navigation"
+      >
       <div className="mb-6">
-        <h2 className="text-xl font-bold text-gray-100 mb-3">PRD Manager</h2>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-xl font-bold text-gray-100">PRD Manager</h2>
+          {/* Mobile close button */}
+          {onClose && (
+            <button
+              onClick={onClose}
+              className="lg:hidden p-1 text-gray-400 hover:text-gray-100"
+              aria-label="Close menu"
+            >
+              <X size={24} />
+            </button>
+          )}
+        </div>
         {user && (
           <div className="px-3 py-2 bg-gray-700/50 rounded-md border border-gray-600">
             <div className="text-xs text-gray-400 mb-1">Logged in as</div>
@@ -79,7 +124,23 @@ const Sidebar: React.FC = () => {
             </button>
           </div>
       {isAddingCategory && <div className="mb-4 flex flex-col space-y-2">
-          <input type="text" value={newCategoryName} onChange={e => setNewCategoryName(e.target.value)} placeholder="Category name" className="px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-sm text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" autoFocus />
+          <input
+            type="text"
+            value={newCategoryName}
+            onChange={e => setNewCategoryName(e.target.value)}
+            onKeyDown={e => {
+              if (e.key === 'Enter') {
+                handleAddCategory();
+              } else if (e.key === 'Escape') {
+                setIsAddingCategory(false);
+                setNewCategoryName('');
+              }
+            }}
+            placeholder="Category name"
+            className="px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-sm text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            aria-label="New category name"
+            autoFocus
+          />
           <div className="flex space-x-2">
             <button onClick={handleAddCategory} className="px-3 py-1 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 transition-colors">
               Add
@@ -163,6 +224,8 @@ const Sidebar: React.FC = () => {
           <span>Logout</span>
         </button>
       </div>
-    </div>;
+    </aside>
+    </>
+  );
 };
 export default Sidebar;

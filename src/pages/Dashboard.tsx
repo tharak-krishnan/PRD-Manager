@@ -4,27 +4,39 @@ import FeatureTable from '../components/FeatureTable';
 import Roadmap from '../components/Roadmap';
 import CategoryForm from '../components/CategoryForm';
 import ProjectSelectionScreen from '../components/ProjectSelectionScreen';
+import Modal from '../components/Modal';
 import { useData } from '../context/DataContext';
-import { EditIcon, Trash2Icon, FileSpreadsheet, FileText, Upload } from 'lucide-react';
+import { useModal } from '../hooks/useModal';
+import { EditIcon, Trash2Icon, FileSpreadsheet, FileText, Upload, Menu } from 'lucide-react';
 import { apiClient } from '../services/api';
 const Dashboard: React.FC = () => {
   const {
     selectedProjectId,
     categories,
     selectedCategoryId,
-    deleteCategory
+    deleteCategory,
+    refreshCategories
   } = useData();
+  const { modalState, hideModal, confirm } = useModal();
   const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
   const [isExportingExcel, setIsExportingExcel] = useState(false);
   const [isExportingWord, setIsExportingWord] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const [exportError, setExportError] = useState<string | null>(null);
   const [importSuccess, setImportSuccess] = useState<string | null>(null);
-  // const selectedCategory = categories.find(c => c.id === selectedCategoryId);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  const selectedCategory = categories.find(c => c.id === selectedCategoryId);
+  const featureCount = selectedCategory?.features.length || 0;
+
   const handleDeleteCategory = (id: string) => {
-    if (window.confirm('Are you sure you want to delete this category? This will also delete all features in this category.')) {
-      deleteCategory(id);
-    }
+    confirm(
+      'Delete Category',
+      `Are you sure you want to delete this category?\n\nThis will permanently delete ${featureCount} feature${featureCount !== 1 ? 's' : ''}.`,
+      () => deleteCategory(id),
+      'Delete',
+      'Cancel'
+    );
   };
 
   const handleExportExcel = async () => {
@@ -87,10 +99,13 @@ const Dashboard: React.FC = () => {
       const result = await apiClient.importPrdExcel(file);
       setImportSuccess(`Successfully imported ${result.categories_imported} categories and ${result.features_imported} features`);
 
-      // Reload the page to show the imported data
+      // Refresh the data to show imported content
+      await refreshCategories();
+
+      // Clear success message after a delay
       setTimeout(() => {
-        window.location.reload();
-      }, 2000);
+        setImportSuccess(null);
+      }, 5000);
     } catch (err) {
       const error = err as { response?: { data?: { error?: string } } };
       setExportError(error.response?.data?.error || 'Failed to import Excel file');
@@ -100,12 +115,38 @@ const Dashboard: React.FC = () => {
       event.target.value = '';
     }
   };
-  return <div className="flex h-screen overflow-hidden">
-      <Sidebar />
+  return (
+    <>
+      <Modal
+        isOpen={modalState.isOpen}
+        onClose={hideModal}
+        onConfirm={modalState.onConfirm}
+        title={modalState.title}
+        message={modalState.message}
+        type={modalState.type}
+        confirmText={modalState.confirmText}
+        cancelText={modalState.cancelText}
+      />
+
+      <div className="flex h-screen overflow-hidden">
+      <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+
       {selectedProjectId === null ? (
         <ProjectSelectionScreen />
       ) : (
-      <div className="flex-1 overflow-y-auto p-6 bg-gray-900">
+      <div className="flex-1 overflow-y-auto bg-gray-900">
+        {/* Mobile menu button */}
+        <div className="lg:hidden sticky top-0 z-30 bg-gray-800 border-b border-gray-700 px-4 py-3">
+          <button
+            onClick={() => setIsSidebarOpen(true)}
+            className="p-2 text-gray-300 hover:text-white hover:bg-gray-700 rounded-md"
+            aria-label="Open menu"
+          >
+            <Menu size={24} />
+          </button>
+        </div>
+
+        <div className="p-6">
         {/* Header with export and category buttons - only show when category is selected */}
         {selectedCategoryId && (
           <div className="mb-6 flex justify-between items-center">
@@ -181,8 +222,11 @@ const Dashboard: React.FC = () => {
             <FeatureTable categoryId={selectedCategoryId} />
           </>}
         {!selectedCategoryId && <Roadmap />}
+        </div>
       </div>
       )}
-    </div>;
+    </div>
+    </>
+  );
 };
 export default Dashboard;

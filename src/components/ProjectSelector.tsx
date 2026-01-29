@@ -1,11 +1,14 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useData } from '../context/DataContext';
 import { useAuth } from '../context/AuthContext';
+import { useModal } from '../hooks/useModal';
+import Modal from './Modal';
 import { ChevronDown, Plus, Edit2, Trash2, FolderOpen } from 'lucide-react';
 
 const ProjectSelector: React.FC = () => {
   const { projects, selectedProjectId, selectProject, addProject, updateProject, deleteProject } = useData();
   const { user } = useAuth();
+  const { modalState, hideModal, confirm, alert: showAlert } = useModal();
   const [isOpen, setIsOpen] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -58,17 +61,26 @@ const ProjectSelector: React.FC = () => {
 
   const handleDeleteProject = async (id: number) => {
     if (projects.length <= 1) {
-      alert('Cannot delete the last project');
+      showAlert(
+        'Cannot Delete Project',
+        'You cannot delete the last project. At least one project must exist.'
+      );
       return;
     }
 
-    if (confirm('Delete this project? All categories and features will be deleted.')) {
-      try {
-        await deleteProject(id);
-      } catch (error) {
-        console.error('Failed to delete project:', error);
-      }
-    }
+    confirm(
+      'Delete Project',
+      'Are you sure you want to delete this project?\n\nAll categories and features in this project will be permanently deleted.',
+      async () => {
+        try {
+          await deleteProject(id);
+        } catch (error) {
+          console.error('Failed to delete project:', error);
+        }
+      },
+      'Delete Project',
+      'Cancel'
+    );
   };
 
   const startEditing = (project: { id: number; name: string; description: string }) => {
@@ -86,10 +98,25 @@ const ProjectSelector: React.FC = () => {
   };
 
   return (
-    <div className="relative mb-4" ref={dropdownRef}>
+    <>
+      <Modal
+        isOpen={modalState.isOpen}
+        onClose={hideModal}
+        onConfirm={modalState.onConfirm}
+        title={modalState.title}
+        message={modalState.message}
+        type={modalState.type}
+        confirmText={modalState.confirmText}
+        cancelText={modalState.cancelText}
+      />
+
+      <div className="relative mb-4" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-gray-100 flex items-center justify-between hover:bg-gray-600 transition-colors"
+        aria-label="Select project"
+        aria-expanded={isOpen}
+        aria-haspopup="listbox"
       >
         <div className="flex items-center flex-1 min-w-0">
           <FolderOpen size={18} className="mr-2 flex-shrink-0 text-blue-400" />
@@ -115,16 +142,36 @@ const ProjectSelector: React.FC = () => {
                       type="text"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          handleUpdateProject(project.id);
+                        } else if (e.key === 'Escape') {
+                          setEditingId(null);
+                          setName('');
+                          setDescription('');
+                        }
+                      }}
                       placeholder="Project name"
                       className="w-full px-2 py-1 bg-gray-800 border border-gray-600 rounded text-sm text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      aria-label="Project name"
                       autoFocus
                     />
                     <input
                       type="text"
                       value={description}
                       onChange={(e) => setDescription(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          handleUpdateProject(project.id);
+                        } else if (e.key === 'Escape') {
+                          setEditingId(null);
+                          setName('');
+                          setDescription('');
+                        }
+                      }}
                       placeholder="Description"
                       className="w-full px-2 py-1 bg-gray-800 border border-gray-600 rounded text-sm text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      aria-label="Project description"
                     />
                     <div className="flex space-x-2">
                       <button
@@ -205,16 +252,36 @@ const ProjectSelector: React.FC = () => {
                     type="text"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        handleAddProject();
+                      } else if (e.key === 'Escape') {
+                        setIsAdding(false);
+                        setName('');
+                        setDescription('');
+                      }
+                    }}
                     placeholder="Project name"
                     className="w-full px-2 py-1 bg-gray-800 border border-gray-600 rounded text-sm text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    aria-label="New project name"
                     autoFocus
                   />
                   <input
                     type="text"
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        handleAddProject();
+                      } else if (e.key === 'Escape') {
+                        setIsAdding(false);
+                        setName('');
+                        setDescription('');
+                      }
+                    }}
                     placeholder="Description"
                     className="w-full px-2 py-1 bg-gray-800 border border-gray-600 rounded text-sm text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    aria-label="New project description"
                   />
                   <div className="flex space-x-2">
                     <button
@@ -249,6 +316,7 @@ const ProjectSelector: React.FC = () => {
         </div>
       )}
     </div>
+    </>
   );
 };
 
