@@ -18,8 +18,9 @@ const Login: React.FC = () => {
     try {
       await login(username, password);
       navigate('/');
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'Invalid credentials. Please try again.');
+    } catch (err) {
+      const error = err as { response?: { data?: { error?: string } } };
+      setError(error.response?.data?.error || 'Invalid credentials. Please try again.');
     } finally {
       setIsLoading(false);
     }

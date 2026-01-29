@@ -1,6 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
 import { renderWithProviders, screen, mockCategories } from '../testUtils';
-import userEvent from '@testing-library/user-event';
 import Sidebar from '../../components/Sidebar';
 
 // Mock useData hook

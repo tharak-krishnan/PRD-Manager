@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { useData, Category, Feature } from '../context/DataContext';
+import { useData, Feature } from '../context/DataContext';
 import { Download } from 'lucide-react';
 import { apiClient } from '../services/api';
 const Roadmap: React.FC = () => {
@@ -84,8 +84,9 @@ const Roadmap: React.FC = () => {
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
-    } catch (err: any) {
-      setExportError(err.response?.data?.error || 'Failed to export roadmap');
+    } catch (err) {
+      const error = err as { response?: { data?: { error?: string } } };
+      setExportError(error.response?.data?.error || 'Failed to export roadmap');
     } finally {
       setIsExporting(false);
     }
@@ -152,11 +153,11 @@ const Roadmap: React.FC = () => {
           <div className="absolute inset-0 flex pointer-events-none">
             <div className="w-48 flex-shrink-0"></div>
             <div className="flex-1 flex">
-              {months.map((month, index) => <div key={month} className="flex-1 border-r border-gray-700/50 h-full"></div>)}
+              {months.map((month) => <div key={month} className="flex-1 border-r border-gray-700/50 h-full"></div>)}
             </div>
           </div>
           {/* Features by category */}
-          {categories.map((category, categoryIndex) => {
+          {categories.map((category) => {
           const hasFeatures = featuresWithDates.some(f => f.categoryId === category.id);
           if (!hasFeatures) return null;
           return <div key={category.id} className="flex mb-6 relative z-10">

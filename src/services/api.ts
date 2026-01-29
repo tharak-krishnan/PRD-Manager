@@ -74,12 +74,12 @@ class ApiClient {
   }
 
   // Feature endpoints
-  async createFeature(categoryId: string, feature: any) {
+  async createFeature(categoryId: string, feature: Record<string, unknown>) {
     const response = await this.client.post(`/categories/${categoryId}/features`, feature);
     return response.data;
   }
 
-  async updateFeature(featureId: string, data: any) {
+  async updateFeature(featureId: string, data: Record<string, unknown>) {
     const response = await this.client.put(`/features/${featureId}`, data);
     return response.data;
   }

@@ -30,16 +30,18 @@ const FeatureTable: React.FC<FeatureTableProps> = ({
     engineeringComplexity: 'M',
     releaseDate: ''
   });
-  if (!category) return null;
 
-  // Pagination logic
-  const totalFeatures = category.features.length;
+  // Pagination logic - calculate before early return to satisfy hooks rules
+  const totalFeatures = category?.features.length || 0;
   const totalPages = Math.ceil(totalFeatures / itemsPerPage);
   const paginatedFeatures = useMemo(() => {
+    if (!category) return [];
     const startIndex = (currentPage - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
     return category.features.slice(startIndex, endIndex);
-  }, [category.features, currentPage, itemsPerPage]);
+  }, [category, currentPage, itemsPerPage]);
+
+  if (!category) return null;
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);

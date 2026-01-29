@@ -18,7 +18,7 @@ const Dashboard: React.FC = () => {
   const [isImporting, setIsImporting] = useState(false);
   const [exportError, setExportError] = useState<string | null>(null);
   const [importSuccess, setImportSuccess] = useState<string | null>(null);
-  const selectedCategory = categories.find(c => c.id === selectedCategoryId);
+  // const selectedCategory = categories.find(c => c.id === selectedCategoryId);
   const handleDeleteCategory = (id: string) => {
     if (window.confirm('Are you sure you want to delete this category? This will also delete all features in this category.')) {
       deleteCategory(id);
@@ -41,8 +41,9 @@ const Dashboard: React.FC = () => {
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
-    } catch (err: any) {
-      setExportError(err.response?.data?.error || 'Failed to export to Excel');
+    } catch (err) {
+      const error = err as { response?: { data?: { error?: string } } };
+      setExportError(error.response?.data?.error || 'Failed to export to Excel');
     } finally {
       setIsExportingExcel(false);
     }
@@ -64,8 +65,9 @@ const Dashboard: React.FC = () => {
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
-    } catch (err: any) {
-      setExportError(err.response?.data?.error || 'Failed to export to Word');
+    } catch (err) {
+      const error = err as { response?: { data?: { error?: string } } };
+      setExportError(error.response?.data?.error || 'Failed to export to Word');
     } finally {
       setIsExportingWord(false);
     }
@@ -87,8 +89,9 @@ const Dashboard: React.FC = () => {
       setTimeout(() => {
         window.location.reload();
       }, 2000);
-    } catch (err: any) {
-      setExportError(err.response?.data?.error || 'Failed to import Excel file');
+    } catch (err) {
+      const error = err as { response?: { data?: { error?: string } } };
+      setExportError(error.response?.data?.error || 'Failed to import Excel file');
     } finally {
       setIsImporting(false);
       // Reset the file input
