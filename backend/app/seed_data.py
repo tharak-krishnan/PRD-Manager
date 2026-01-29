@@ -1,6 +1,7 @@
 from app import create_app, db
-from app.models import Category, Feature, Priority, TShirtSize, Project
+from app.models import Category, Feature, Priority, TShirtSize, Project, User, UserRole
 from sqlalchemy import inspect
+from werkzeug.security import generate_password_hash
 
 
 def seed_database():
@@ -28,6 +29,41 @@ def seed_database():
     )
     db.session.add(default_project)
     db.session.flush()  # Ensure project ID is available
+
+    # Create default users (only if none exist)
+    if User.query.count() == 0:
+        users = [
+            User(
+                username="admin",
+                email="admin@prdmanager.com",
+                password_hash=generate_password_hash("admin123"),
+                role=UserRole.ADMIN,
+                is_active=True
+            ),
+            User(
+                username="pm",
+                email="pm@prdmanager.com",
+                password_hash=generate_password_hash("pm123"),
+                role=UserRole.PRODUCT_MANAGER,
+                is_active=True
+            ),
+            User(
+                username="engineer",
+                email="engineer@prdmanager.com",
+                password_hash=generate_password_hash("engineer123"),
+                role=UserRole.ENGINEER,
+                is_active=True
+            ),
+            User(
+                username="viewer",
+                email="viewer@prdmanager.com",
+                password_hash=generate_password_hash("viewer123"),
+                role=UserRole.VIEWER,
+                is_active=True
+            ),
+        ]
+        db.session.add_all(users)
+        print(f"- Created 4 default users")
 
     # Category 1: User Authentication
     category_1 = Category(
@@ -410,8 +446,10 @@ def seed_database():
     db.session.commit()
 
     print(f"Database seeded successfully!")
+    print(f"- Created 1 project")
     print(f"- Created 6 categories")
     print(f"- Created 23 features")
+    print(f"- Users: {User.query.count()} total")
 
 
 if __name__ == "__main__":
