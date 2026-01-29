@@ -1,20 +1,40 @@
 from app import create_app, db
-from app.models import Category, Feature, Priority, TShirtSize
+from app.models import Category, Feature, Priority, TShirtSize, Project
+from sqlalchemy import inspect
 
 
 def seed_database():
     """Seed database with initial categories and features from the original React app"""
     print("Seeding database...")
 
+    # Check if projects table exists
+    inspector = inspect(db.engine)
+    if "projects" not in inspector.get_table_names():
+        print(
+            "Projects table does not exist yet. Skipping seed data. Please run migrations first."
+        )
+        return
+
     # Clear existing data
     Feature.query.delete()
     Category.query.delete()
+    Project.query.delete()
+
+    # Create default project
+    default_project = Project(
+        id=1,
+        name="Default Project",
+        description="Initial project for PRD management"
+    )
+    db.session.add(default_project)
+    db.session.flush()  # Ensure project ID is available
 
     # Category 1: User Authentication
     category_1 = Category(
         id="1",
         name="User Authentication",
         description="Features related to user login, registration, and account management",
+        project_id=1
     )
     db.session.add(category_1)
 
@@ -92,6 +112,7 @@ def seed_database():
         id="2",
         name="Analytics Dashboard",
         description="Features for data visualization and reporting",
+        project_id=1
     )
     db.session.add(category_2)
 
@@ -156,6 +177,7 @@ def seed_database():
         id="3",
         name="Mobile Application",
         description="Features for the iOS and Android mobile applications",
+        project_id=1
     )
     db.session.add(category_3)
 
@@ -220,6 +242,7 @@ def seed_database():
         id="4",
         name="Payment Processing",
         description="Features related to billing, subscriptions, and payment methods",
+        project_id=1
     )
     db.session.add(category_4)
 
@@ -271,6 +294,7 @@ def seed_database():
         id="5",
         name="Performance Optimization",
         description="Features focused on improving application speed and efficiency",
+        project_id=1
     )
     db.session.add(category_5)
 
@@ -322,6 +346,7 @@ def seed_database():
         id="6",
         name="Collaboration Tools",
         description="Features that enable team collaboration and communication",
+        project_id=1
     )
     db.session.add(category_6)
 

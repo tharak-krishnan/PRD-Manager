@@ -1,6 +1,6 @@
 import pytest
 from app import create_app, db
-from app.models import User, Category, Feature
+from app.models import User, UserRole, Category, Feature, Project
 import os
 
 
@@ -70,12 +70,26 @@ def sample_user():
 
 
 @pytest.fixture
-def sample_category():
+def sample_project():
+    """Create a sample project"""
+    project = Project(
+        id=1,
+        name='Test Project',
+        description='Test project description'
+    )
+    db.session.add(project)
+    db.session.commit()
+    return project
+
+
+@pytest.fixture
+def sample_category(sample_project):
     """Create a sample category"""
     category = Category(
         id='cat-1',
         name='Test Category',
-        description='Test category description'
+        description='Test category description',
+        project_id=sample_project.id
     )
     db.session.add(category)
     db.session.commit()
@@ -104,14 +118,30 @@ def sample_feature(sample_category):
 
 
 @pytest.fixture
-def multiple_categories():
+def multiple_projects():
+    """Create multiple projects for testing"""
+    projects = []
+    for i in range(3):
+        project = Project(
+            name=f'Project {i+1}',
+            description=f'Description for project {i+1}'
+        )
+        db.session.add(project)
+        projects.append(project)
+    db.session.commit()
+    return projects
+
+
+@pytest.fixture
+def multiple_categories(sample_project):
     """Create multiple categories for testing"""
     categories = []
     for i in range(5):
         category = Category(
             id=f'cat-{i+1}',
             name=f'Category {i+1}',
-            description=f'Description for category {i+1}'
+            description=f'Description for category {i+1}',
+            project_id=sample_project.id
         )
         db.session.add(category)
         categories.append(category)
@@ -141,3 +171,106 @@ def category_with_features(sample_category):
         features.append(feature)
     db.session.commit()
     return sample_category, features
+
+
+# RBAC Fixtures
+
+
+@pytest.fixture
+def admin_user():
+    """Create an admin user"""
+    user = User(username='admin', email='admin@test.com', role=UserRole.ADMIN)
+    user.set_password('admin123')
+    db.session.add(user)
+    db.session.commit()
+    return user
+
+
+@pytest.fixture
+def pm_user():
+    """Create a product manager user"""
+    user = User(username='pm', email='pm@test.com', role=UserRole.PRODUCT_MANAGER)
+    user.set_password('pm123')
+    db.session.add(user)
+    db.session.commit()
+    return user
+
+
+@pytest.fixture
+def engineer_user():
+    """Create an engineer user"""
+    user = User(username='engineer', email='eng@test.com', role=UserRole.ENGINEER)
+    user.set_password('eng123')
+    db.session.add(user)
+    db.session.commit()
+    return user
+
+
+@pytest.fixture
+def viewer_user():
+    """Create a viewer user"""
+    user = User(username='viewer', email='viewer@test.com', role=UserRole.VIEWER)
+    user.set_password('viewer123')
+    db.session.add(user)
+    db.session.commit()
+    return user
+
+
+@pytest.fixture
+def admin_headers(client, admin_user):
+    """Create admin authentication headers"""
+    response = client.post(
+        '/api/auth/login', json={'username': 'admin', 'password': 'admin123'}
+    )
+    token = response.json['access_token']
+    return {'Authorization': f'Bearer {token}'}
+
+
+@pytest.fixture
+def pm_headers(client, pm_user):
+    """Create product manager authentication headers"""
+    response = client.post('/api/auth/login', json={'username': 'pm', 'password': 'pm123'})
+    token = response.json['access_token']
+    return {'Authorization': f'Bearer {token}'}
+
+
+@pytest.fixture
+def engineer_headers(client, engineer_user):
+    """Create engineer authentication headers"""
+    response = client.post(
+        '/api/auth/login', json={'username': 'engineer', 'password': 'eng123'}
+    )
+    token = response.json['access_token']
+    return {'Authorization': f'Bearer {token}'}
+
+
+@pytest.fixture
+def viewer_headers(client, viewer_user):
+    """Create viewer authentication headers"""
+    response = client.post(
+        '/api/auth/login', json={'username': 'viewer', 'password': 'viewer123'}
+    )
+    token = response.json['access_token']
+    return {'Authorization': f'Bearer {token}'}
+
+
+@pytest.fixture
+def feature_assigned_to_engineer(sample_category, engineer_user):
+    """Create a feature assigned to an engineer"""
+    feature = Feature(
+        id='F-ASSIGNED',
+        title='Assigned Feature',
+        priority='Medium',
+        description='Feature assigned to engineer',
+        kpi='Test KPI',
+        customer_name='Test Customer',
+        engineering_comment='Initial comment',
+        engineering_signoff=False,
+        engineering_complexity='M',
+        release_date='2024-06',
+        category_id=sample_category.id,
+        assigned_engineer_id=engineer_user.id,
+    )
+    db.session.add(feature)
+    db.session.commit()
+    return feature

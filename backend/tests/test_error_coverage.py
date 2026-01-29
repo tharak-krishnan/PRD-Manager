@@ -52,13 +52,14 @@ class TestRoutesErrorCoverage:
 
         assert response.status_code == 500
 
-    def test_categories_create_exception(self, client, auth_headers, mocker):
+    def test_categories_create_exception(self, client, admin_headers, sample_project, mocker):
         """Test create category with exception"""
         mocker.patch('app.services.CategoryService.create_category',
                      side_effect=Exception('DB error'))
 
-        response = client.post('/api/categories', headers=auth_headers, json={
-            'name': 'Test Category'
+        response = client.post('/api/categories', headers=admin_headers, json={
+            'name': 'Test Category',
+            'project_id': sample_project.id
         })
 
         assert response.status_code == 500
@@ -78,25 +79,25 @@ class TestRoutesErrorCoverage:
 
         assert response.status_code == 500
 
-    def test_categories_update_exception(self, client, auth_headers, sample_category, mocker):
+    def test_categories_update_exception(self, client, admin_headers, sample_category, mocker):
         """Test update category with exception"""
         mocker.patch('app.services.CategoryService.update_category',
                      side_effect=Exception('DB error'))
 
         response = client.put(
             f'/api/categories/{sample_category.id}',
-            headers=auth_headers,
+            headers=admin_headers,
             json={'name': 'Updated'}
         )
 
         assert response.status_code == 500
 
-    def test_categories_delete_exception(self, client, auth_headers, sample_category, mocker):
+    def test_categories_delete_exception(self, client, admin_headers, sample_category, mocker):
         """Test delete category with exception"""
         mocker.patch('app.services.CategoryService.delete_category',
                      side_effect=Exception('DB error'))
 
-        response = client.delete(f'/api/categories/{sample_category.id}', headers=auth_headers)
+        response = client.delete(f'/api/categories/{sample_category.id}', headers=admin_headers)
 
         assert response.status_code == 500
 
@@ -109,38 +110,40 @@ class TestRoutesErrorCoverage:
 
         assert response.status_code == 500
 
-    def test_features_create_exception(self, client, auth_headers, sample_category, mocker):
+    def test_features_create_exception(self, client, admin_headers, sample_category, mocker):
         """Test create feature with exception"""
         mocker.patch('app.services.FeatureService.create_feature',
                      side_effect=Exception('DB error'))
 
         response = client.post(
             f'/api/categories/{sample_category.id}/features',
-            headers=auth_headers,
+            headers=admin_headers,
             json={'title': 'Test Feature'}
         )
 
         assert response.status_code == 500
 
-    def test_features_update_exception(self, client, auth_headers, sample_feature, mocker):
+    def test_features_update_exception(self, client, admin_headers, sample_feature, mocker):
         """Test update feature with exception"""
+        mocker.patch('app.services.FeatureService.get_feature_by_id',
+                     return_value=sample_feature)
         mocker.patch('app.services.FeatureService.update_feature',
                      side_effect=Exception('DB error'))
 
         response = client.put(
             f'/api/features/{sample_feature.id}',
-            headers=auth_headers,
+            headers=admin_headers,
             json={'title': 'Updated'}
         )
 
         assert response.status_code == 500
 
-    def test_features_delete_exception(self, client, auth_headers, sample_feature, mocker):
+    def test_features_delete_exception(self, client, admin_headers, sample_feature, mocker):
         """Test delete feature with exception"""
         mocker.patch('app.services.FeatureService.delete_feature',
                      side_effect=Exception('DB error'))
 
-        response = client.delete(f'/api/features/{sample_feature.id}', headers=auth_headers)
+        response = client.delete(f'/api/features/{sample_feature.id}', headers=admin_headers)
 
         assert response.status_code == 500
 
@@ -196,14 +199,14 @@ class TestServiceErrorCoverage:
 class TestExportServiceCoverage:
     """Tests for export service edge cases"""
 
-    def test_roadmap_export_no_dates(self, client):
+    def test_roadmap_export_no_dates(self, client, sample_project):
         """Test roadmap export when no features have dates"""
         from app.services.export_service import RoadmapExporter
         from app.models import Category
         from app import db
 
         # Create category with feature but no date
-        cat = Category(id='cat-test', name='Test', description='Test')
+        cat = Category(id='cat-test', name='Test', description='Test', project_id=sample_project.id)
         db.session.add(cat)
 
         feature = Feature(

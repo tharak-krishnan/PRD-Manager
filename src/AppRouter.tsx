@@ -4,6 +4,7 @@ import { App } from "./App";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Help from "./pages/Help";
+import UserManagement from "./components/UserManagement";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 
 // Protected route component
@@ -33,6 +34,14 @@ export function AppRouter() {
             element={
               <PrivateRoute>
                 <Help />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/users"
+            element={
+              <PrivateRoute>
+                <UserManagement />
               </PrivateRoute>
             }
           />

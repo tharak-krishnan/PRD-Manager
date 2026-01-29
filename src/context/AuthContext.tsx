@@ -1,10 +1,27 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { apiClient } from '../services/api';
 
+export type UserRole = 'admin' | 'product_manager' | 'engineer' | 'viewer';
+
 interface User {
   id: number;
   username: string;
   email: string;
+  role: UserRole;
+}
+
+export interface Feature {
+  id: string;
+  title: string;
+  priority: string;
+  description: string;
+  kpi: string;
+  customerName: string;
+  engineeringComment: string;
+  engineeringSignoff: boolean;
+  engineeringComplexity: string;
+  releaseDate: string;
+  assignedEngineerId?: number;
 }
 
 interface AuthContextType {
@@ -14,6 +31,8 @@ interface AuthContextType {
   register: (username: string, email: string, password: string) => Promise<void>;
   isAuthenticated: boolean;
   isLoading: boolean;
+  hasRole: (...roles: UserRole[]) => boolean;
+  canEditFeature: (feature: Feature) => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -60,6 +79,21 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     await apiClient.register(username, email, password);
   };
 
+  const hasRole = (...roles: UserRole[]): boolean => {
+    return user ? roles.includes(user.role) : false;
+  };
+
+  const canEditFeature = (feature: Feature): boolean => {
+    if (!user) return false;
+
+    if (user.role === 'admin') return true;
+    if (user.role === 'product_manager') return true;
+    if (user.role === 'engineer') {
+      return feature.assignedEngineerId === user.id;
+    }
+    return false;
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -69,6 +103,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         register,
         isAuthenticated: !!user,
         isLoading,
+        hasRole,
+        canEditFeature,
       }}
     >
       {children}

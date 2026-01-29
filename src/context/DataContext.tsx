@@ -3,6 +3,15 @@ import { apiClient } from '../services/api';
 
 export type Priority = 'High' | 'Medium' | 'Low';
 export type TShirtSize = 'XS' | 'S' | 'M' | 'L' | 'XL';
+
+export interface Project {
+  id: number;
+  name: string;
+  description: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
 export interface Feature {
   id: string;
   title: string;
@@ -14,25 +23,41 @@ export interface Feature {
   engineeringSignoff: boolean;
   engineeringComplexity: TShirtSize;
   releaseDate: string; // YYYY-MM format
+  assignedEngineerId?: number;
 }
+
 export interface Category {
   id: string;
   name: string;
   description: string;
+  project_id: number;
   features: Feature[];
 }
 interface DataContextType {
+  // Project state
+  projects: Project[];
+  selectedProjectId: number | null;
+  addProject: (project: Omit<Project, 'id' | 'created_at' | 'updated_at'>) => Promise<void>;
+  updateProject: (id: number, data: Partial<Omit<Project, 'id' | 'created_at' | 'updated_at'>>) => Promise<void>;
+  deleteProject: (id: number) => Promise<void>;
+  selectProject: (id: number | null) => void;
+  refreshProjects: () => Promise<void>;
+
+  // Category state
   categories: Category[];
   selectedCategoryId: string | null;
-  addCategory: (category: Omit<Category, 'id' | 'features'>) => Promise<void>;
-  updateCategory: (id: string, data: Partial<Omit<Category, 'id' | 'features'>>) => Promise<void>;
+  addCategory: (category: Omit<Category, 'id' | 'features' | 'project_id'>) => Promise<void>;
+  updateCategory: (id: string, data: Partial<Omit<Category, 'id' | 'features' | 'project_id'>>) => Promise<void>;
   deleteCategory: (id: string) => Promise<void>;
   selectCategory: (id: string | null) => void;
+  refreshCategories: () => Promise<void>;
+
+  // Feature state
   addFeature: (categoryId: string, feature: Omit<Feature, 'id'>) => Promise<void>;
   updateFeature: (categoryId: string, featureId: string, data: Partial<Omit<Feature, 'id'>>) => Promise<void>;
   deleteFeature: (categoryId: string, featureId: string) => Promise<void>;
+
   isLoading: boolean;
-  refreshCategories: () => Promise<void>;
 }
 const DataContext = createContext<DataContextType | undefined>(undefined);
 export const useData = () => {
@@ -47,14 +72,30 @@ export const DataProvider: React.FC<{
 }> = ({
   children
 }) => {
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [selectedProjectId, setSelectedProjectId] = useState<number | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>('1');
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  const refreshProjects = async () => {
+    try {
+      const data = await apiClient.getProjects();
+      setProjects(data);
+    } catch (error) {
+      console.error('Failed to fetch projects:', error);
+    }
+  };
+
   const refreshCategories = async () => {
+    if (selectedProjectId === null) {
+      setCategories([]);
+      return;
+    }
+
     setIsLoading(true);
     try {
-      const data = await apiClient.getCategories();
+      const data = await apiClient.getCategories(selectedProjectId);
       setCategories(data);
     } catch (error) {
       console.error('Failed to fetch categories:', error);
@@ -63,19 +104,75 @@ export const DataProvider: React.FC<{
     }
   };
 
+  // Fetch projects on mount
   useEffect(() => {
-    // Only fetch categories if user is authenticated
     const token = localStorage.getItem('access_token');
     if (token) {
-      refreshCategories();
+      refreshProjects().finally(() => setIsLoading(false));
     } else {
       setIsLoading(false);
     }
   }, []);
 
-  const addCategory = async (category: Omit<Category, 'id' | 'features'>) => {
+  // Fetch categories when project changes
+  useEffect(() => {
+    const token = localStorage.getItem('access_token');
+    if (token && selectedProjectId !== null) {
+      refreshCategories();
+    } else {
+      setCategories([]);
+      setIsLoading(false);
+    }
+  }, [selectedProjectId]);
+
+  const addProject = async (project: Omit<Project, 'id' | 'created_at' | 'updated_at'>) => {
     try {
-      const newCategory = await apiClient.createCategory(category.name, category.description);
+      const newProject = await apiClient.createProject(project.name, project.description);
+      setProjects([...projects, newProject]);
+    } catch (error) {
+      console.error('Failed to create project:', error);
+      throw error;
+    }
+  };
+
+  const updateProject = async (id: number, data: Partial<Omit<Project, 'id' | 'created_at' | 'updated_at'>>) => {
+    try {
+      await apiClient.updateProject(id, data);
+      await refreshProjects();
+    } catch (error) {
+      console.error('Failed to update project:', error);
+      throw error;
+    }
+  };
+
+  const deleteProject = async (id: number) => {
+    try {
+      await apiClient.deleteProject(id);
+      setProjects(projects.filter(p => p.id !== id));
+      if (selectedProjectId === id) {
+        setSelectedProjectId(null);
+        setCategories([]);
+        setSelectedCategoryId(null);
+      }
+    } catch (error) {
+      console.error('Failed to delete project:', error);
+      throw error;
+    }
+  };
+
+  const selectProject = (id: number | null) => {
+    setSelectedProjectId(id);
+    setSelectedCategoryId(null);
+    setCategories([]);
+  };
+
+  const addCategory = async (category: Omit<Category, 'id' | 'features' | 'project_id'>) => {
+    if (selectedProjectId === null) {
+      throw new Error('No project selected');
+    }
+
+    try {
+      const newCategory = await apiClient.createCategory(category.name, category.description, selectedProjectId);
       setCategories([...categories, newCategory]);
     } catch (error) {
       console.error('Failed to create category:', error);
@@ -141,21 +238,32 @@ export const DataProvider: React.FC<{
   };
 
   const value = {
+    // Projects
+    projects,
+    selectedProjectId,
+    addProject,
+    updateProject,
+    deleteProject,
+    selectProject,
+    refreshProjects,
+    // Categories
     categories,
     selectedCategoryId,
     addCategory,
     updateCategory,
     deleteCategory,
     selectCategory,
+    refreshCategories,
+    // Features
     addFeature,
     updateFeature,
     deleteFeature,
+    // Loading
     isLoading,
-    refreshCategories,
   };
 
-  // Show loading state while fetching initial data
-  if (isLoading && categories.length === 0) {
+  // Show loading state while fetching initial data (projects)
+  if (isLoading && projects.length === 0) {
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center">
         <div className="text-gray-100 text-xl">Loading...</div>

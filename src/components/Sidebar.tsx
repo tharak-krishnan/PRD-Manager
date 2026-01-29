@@ -1,14 +1,19 @@
 import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useData } from '../context/DataContext';
-import { PlusIcon, FolderIcon, BarChartIcon, HelpCircle, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { canManageUsers } from '../utils/permissions';
+import { PlusIcon, FolderIcon, BarChartIcon, HelpCircle, ChevronLeft, ChevronRight, Users, LogOut } from 'lucide-react';
+import ProjectSelector from './ProjectSelector';
 const Sidebar: React.FC = () => {
   const {
+    selectedProjectId,
     categories,
     selectedCategoryId,
     selectCategory,
     addCategory
   } = useData();
+  const { user, logout } = useAuth();
   const [showRoadmap, setShowRoadmap] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
   const [isAddingCategory, setIsAddingCategory] = useState(false);
@@ -46,17 +51,33 @@ const Sidebar: React.FC = () => {
     setCurrentPage(page);
   };
   return <div className="w-64 h-full bg-gray-800 border-r border-gray-700 p-4 flex flex-col">
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl font-bold text-gray-100">PRD Manager</h2>
+      <div className="mb-6">
+        <h2 className="text-xl font-bold text-gray-100 mb-3">PRD Manager</h2>
+        {user && (
+          <div className="px-3 py-2 bg-gray-700/50 rounded-md border border-gray-600">
+            <div className="text-xs text-gray-400 mb-1">Logged in as</div>
+            <div className="text-sm font-medium text-gray-200">{user.username}</div>
+            <div className="text-xs text-blue-400 mt-1 capitalize">
+              {user.role.replace('_', ' ')}
+            </div>
+          </div>
+        )}
       </div>
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-medium text-gray-400 uppercase">
-          Categories
-        </h3>
-        <button onClick={() => setIsAddingCategory(true)} className="text-gray-400 hover:text-blue-400 transition-colors">
-          <PlusIcon size={18} />
-        </button>
-      </div>
+
+      {/* Project Selector */}
+      <ProjectSelector />
+
+      {/* Categories Section - only show when project is selected */}
+      {selectedProjectId !== null ? (
+        <>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-medium text-gray-400 uppercase">
+              Categories
+            </h3>
+            <button onClick={() => setIsAddingCategory(true)} className="text-gray-400 hover:text-blue-400 transition-colors">
+              <PlusIcon size={18} />
+            </button>
+          </div>
       {isAddingCategory && <div className="mb-4 flex flex-col space-y-2">
           <input type="text" value={newCategoryName} onChange={e => setNewCategoryName(e.target.value)} placeholder="Category name" className="px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-sm text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" autoFocus />
           <div className="flex space-x-2">
@@ -115,15 +136,32 @@ const Sidebar: React.FC = () => {
           </div>
         </div>
       )}
+        </>
+      ) : (
+        <div className="flex-1 flex items-center justify-center text-center px-2">
+          <p className="text-sm text-gray-500">Select a project to view categories</p>
+        </div>
+      )}
+
       <div className="mt-4 pt-4 border-t border-gray-700 space-y-1">
         <button onClick={handleShowRoadmap} className={`w-full text-left px-3 py-2 rounded-md flex items-center transition-colors ${showRoadmap ? 'bg-blue-900/50 text-blue-400' : 'text-gray-300 hover:bg-gray-700'}`}>
           <BarChartIcon size={18} className="mr-2" />
           <span>Roadmap</span>
         </button>
+        {user && canManageUsers(user.role) && (
+          <Link to="/users" className="w-full text-left px-3 py-2 rounded-md flex items-center transition-colors text-gray-300 hover:bg-gray-700 block">
+            <Users size={18} className="mr-2" />
+            <span>Users</span>
+          </Link>
+        )}
         <Link to="/help" className="w-full text-left px-3 py-2 rounded-md flex items-center transition-colors text-gray-300 hover:bg-gray-700 block">
           <HelpCircle size={18} className="mr-2" />
           <span>Help</span>
         </Link>
+        <button onClick={logout} className="w-full text-left px-3 py-2 rounded-md flex items-center transition-colors text-gray-300 hover:bg-gray-700">
+          <LogOut size={18} className="mr-2" />
+          <span>Logout</span>
+        </button>
       </div>
     </div>;
 };

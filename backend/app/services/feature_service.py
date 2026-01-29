@@ -17,6 +17,7 @@ class FeatureService:
         engineering_signoff=False,
         engineering_complexity="M",
         release_date="",
+        assigned_engineer_id=None,
     ):
         """Create a new feature in a category"""
         # Get category to generate feature ID
@@ -36,6 +37,7 @@ class FeatureService:
             engineering_signoff=engineering_signoff,
             engineering_complexity=TShirtSize(engineering_complexity),
             release_date=release_date,
+            assigned_engineer_id=assigned_engineer_id,
         )
 
         db.session.add(feature)
@@ -76,6 +78,8 @@ class FeatureService:
             feature.engineering_complexity = TShirtSize(kwargs["engineeringComplexity"])
         if "releaseDate" in kwargs:
             feature.release_date = kwargs["releaseDate"]
+        if "assignedEngineerId" in kwargs:
+            feature.assigned_engineer_id = kwargs["assignedEngineerId"]
 
         db.session.commit()
         return feature

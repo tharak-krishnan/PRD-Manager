@@ -2,6 +2,8 @@ from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required
 from werkzeug.exceptions import NotFound
 from app.services import CategoryService
+from app.utils.permissions import require_role
+from app.models import UserRole
 
 categories_bp = Blueprint("categories", __name__)
 
@@ -9,9 +11,10 @@ categories_bp = Blueprint("categories", __name__)
 @categories_bp.route("/categories", methods=["GET"])
 @jwt_required()
 def get_categories():
-    """Get all categories with their features"""
+    """Get all categories with optional project filter"""
     try:
-        categories = CategoryService.get_all_categories()
+        project_id = request.args.get("project_id", type=int)
+        categories = CategoryService.get_all_categories(project_id=project_id)
         return jsonify([category.to_dict() for category in categories]), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -19,6 +22,7 @@ def get_categories():
 
 @categories_bp.route("/categories", methods=["POST"])
 @jwt_required()
+@require_role(UserRole.ADMIN, UserRole.PRODUCT_MANAGER)
 def create_category():
     """Create a new category"""
     data = request.get_json()
@@ -26,9 +30,14 @@ def create_category():
     if not data.get("name"):
         return jsonify({"error": "Name is required"}), 400
 
+    if not data.get("project_id"):
+        return jsonify({"error": "Project ID is required"}), 400
+
     try:
         category = CategoryService.create_category(
-            name=data["name"], description=data.get("description", "")
+            name=data["name"],
+            project_id=data["project_id"],
+            description=data.get("description", ""),
         )
         return jsonify(category.to_dict()), 201
     except Exception as e:
@@ -51,6 +60,7 @@ def get_category(category_id):
 
 @categories_bp.route("/categories/<string:category_id>", methods=["PUT"])
 @jwt_required()
+@require_role(UserRole.ADMIN, UserRole.PRODUCT_MANAGER)
 def update_category(category_id):
     """Update a category"""
     data = request.get_json()
@@ -68,6 +78,7 @@ def update_category(category_id):
 
 @categories_bp.route("/categories/<string:category_id>", methods=["DELETE"])
 @jwt_required()
+@require_role(UserRole.ADMIN)
 def delete_category(category_id):
     """Delete a category and all its features"""
     try:

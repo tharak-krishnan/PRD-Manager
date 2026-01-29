@@ -1,5 +1,5 @@
 import pytest
-from app.models import User, Category, Feature
+from app.models import User, Category, Feature, Project
 from app import db
 
 
@@ -49,15 +49,74 @@ class TestUserModel:
 
 
 @pytest.mark.unit
+class TestProjectModel:
+    """Unit tests for Project model"""
+
+    def test_project_creation(self, client):
+        """Test creating a new project"""
+        project = Project(
+            name='Test Project',
+            description='Test project description'
+        )
+        db.session.add(project)
+        db.session.commit()
+
+        assert project.id is not None
+        assert project.name == 'Test Project'
+        assert project.description == 'Test project description'
+        assert project.created_at is not None
+        assert project.updated_at is not None
+
+    def test_project_representation(self, client, sample_project):
+        """Test project string representation"""
+        assert str(sample_project) == '<Project Test Project>'
+
+    def test_project_to_dict(self, client, sample_project):
+        """Test project serialization to dictionary"""
+        project_dict = sample_project.to_dict()
+
+        assert project_dict['id'] == sample_project.id
+        assert project_dict['name'] == 'Test Project'
+        assert project_dict['description'] == 'Test project description'
+        assert 'created_at' in project_dict
+        assert 'updated_at' in project_dict
+
+    def test_project_to_dict_with_categories(self, client, sample_project, multiple_categories):
+        """Test project serialization with categories included"""
+        project_dict = sample_project.to_dict(include_categories=True)
+
+        assert 'categories' in project_dict
+        assert len(project_dict['categories']) == 5
+        assert all('name' in cat for cat in project_dict['categories'])
+
+    def test_project_categories_relationship(self, client, sample_project, multiple_categories):
+        """Test relationship between project and categories"""
+        assert len(sample_project.categories) == 5
+        assert all(c.project_id == sample_project.id for c in multiple_categories)
+
+    def test_project_cascade_delete(self, client, sample_project, sample_category):
+        """Test that deleting a project cascades to categories"""
+        project_id = sample_project.id
+        category_id = sample_category.id
+
+        db.session.delete(sample_project)
+        db.session.commit()
+
+        assert Project.query.get(project_id) is None
+        assert Category.query.get(category_id) is None
+
+
+@pytest.mark.unit
 class TestCategoryModel:
     """Unit tests for Category model"""
 
-    def test_category_creation(self, client):
+    def test_category_creation(self, client, sample_project):
         """Test creating a new category"""
         category = Category(
             id='cat-test',
             name='New Category',
-            description='New description'
+            description='New description',
+            project_id=sample_project.id
         )
         db.session.add(category)
         db.session.commit()
@@ -65,6 +124,7 @@ class TestCategoryModel:
         assert category.id == 'cat-test'
         assert category.name == 'New Category'
         assert category.description == 'New description'
+        assert category.project_id == sample_project.id
 
     def test_category_representation(self, client, sample_category):
         """Test category string representation"""

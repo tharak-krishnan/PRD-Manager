@@ -52,14 +52,41 @@ class ApiClient {
     return response.data;
   }
 
-  // Category endpoints
-  async getCategories() {
-    const response = await this.client.get('/categories');
+  // Project endpoints
+  async getProjects() {
+    const response = await this.client.get('/projects');
     return response.data;
   }
 
-  async createCategory(name: string, description: string) {
-    const response = await this.client.post('/categories', { name, description });
+  async createProject(name: string, description: string) {
+    const response = await this.client.post('/projects', { name, description });
+    return response.data;
+  }
+
+  async getProject(id: number) {
+    const response = await this.client.get(`/projects/${id}`);
+    return response.data;
+  }
+
+  async updateProject(id: number, data: { name?: string; description?: string }) {
+    const response = await this.client.put(`/projects/${id}`, data);
+    return response.data;
+  }
+
+  async deleteProject(id: number) {
+    const response = await this.client.delete(`/projects/${id}`);
+    return response.data;
+  }
+
+  // Category endpoints
+  async getCategories(projectId?: number) {
+    const params = projectId ? { project_id: projectId } : {};
+    const response = await this.client.get('/categories', { params });
+    return response.data;
+  }
+
+  async createCategory(name: string, description: string, projectId: number) {
+    const response = await this.client.post('/categories', { name, description, project_id: projectId });
     return response.data;
   }
 
@@ -119,6 +146,22 @@ class ApiClient {
         'Content-Type': 'multipart/form-data',
       },
     });
+    return response.data;
+  }
+
+  // User management endpoints
+  async getAllUsers() {
+    const response = await this.client.get('/users');
+    return response.data;
+  }
+
+  async updateUserRole(userId: number, role: string) {
+    const response = await this.client.put(`/users/${userId}/role`, { role });
+    return response.data;
+  }
+
+  async getEngineers() {
+    const response = await this.client.get('/users/engineers');
     return response.data;
   }
 }

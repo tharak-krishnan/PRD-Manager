@@ -19,10 +19,12 @@ export default function Help() {
           <h2 className="text-xl font-semibold mb-4">Quick Navigation</h2>
           <div className="grid grid-cols-2 gap-4">
             <a href="#getting-started" className="text-blue-400 hover:text-blue-300">Getting Started</a>
+            <a href="#projects" className="text-blue-400 hover:text-blue-300">Managing Projects</a>
             <a href="#categories" className="text-blue-400 hover:text-blue-300">Managing Categories</a>
             <a href="#features" className="text-blue-400 hover:text-blue-300">Managing Features</a>
             <a href="#roadmap" className="text-blue-400 hover:text-blue-300">Product Roadmap</a>
             <a href="#metadata" className="text-blue-400 hover:text-blue-300">Feature Metadata</a>
+            <a href="#roles" className="text-blue-400 hover:text-blue-300">User Roles & Permissions</a>
             <a href="#tips" className="text-blue-400 hover:text-blue-300">Tips & Best Practices</a>
           </div>
         </div>
@@ -48,11 +50,59 @@ export default function Help() {
             <h3 className="text-xl font-semibold mb-3">First Steps</h3>
             <ol className="list-decimal list-inside space-y-2 text-gray-300">
               <li>Log in with your credentials (or register if you're new)</li>
-              <li>Explore the pre-loaded sample categories and features</li>
+              <li><strong>Select a project</strong> from the project selection screen or use the dropdown in the sidebar</li>
+              <li>Explore the pre-loaded sample categories and features in the "Default Project"</li>
               <li>Click on different categories in the sidebar to filter features</li>
               <li>Switch between Dashboard and Roadmap views using the navigation</li>
-              <li>Create your first category or feature to get started</li>
+              <li>Create your first project, category, or feature to get started</li>
             </ol>
+          </div>
+        </section>
+
+        {/* Projects */}
+        <section id="projects" className="mb-12">
+          <h2 className="text-2xl font-bold mb-4 border-b border-gray-700 pb-2">Managing Projects</h2>
+
+          <div className="space-y-4">
+            <div className="bg-gray-800 rounded-lg p-6">
+              <h3 className="text-xl font-semibold mb-3">What are Projects?</h3>
+              <p className="text-gray-300 mb-3">
+                Projects are the top-level organizational units in PRD Manager. Each project contains its own set of
+                categories and features, allowing you to manage multiple products or initiatives separately.
+              </p>
+              <p className="text-gray-300">
+                For example, you might have separate projects for "Web Platform", "Mobile App", "API Services", etc.
+              </p>
+            </div>
+
+            <div className="bg-gray-800 rounded-lg p-6">
+              <h3 className="text-xl font-semibold mb-3">Project Selection</h3>
+              <ul className="list-disc list-inside space-y-2 text-gray-300">
+                <li>On first login, you'll see a project selection screen with all available projects</li>
+                <li>Click any project card to select it and view its categories and features</li>
+                <li>Use the <strong>Project Selector dropdown</strong> at the top of the sidebar to switch between projects</li>
+                <li>All users can see and access all projects (global visibility)</li>
+              </ul>
+            </div>
+
+            <div className="bg-gray-800 rounded-lg p-6">
+              <h3 className="text-xl font-semibold mb-3">Creating & Managing Projects</h3>
+              <div className="space-y-3 text-gray-300">
+                <p><span className="text-blue-400 font-semibold">Admins and Product Managers</span> can:</p>
+                <ul className="list-disc list-inside ml-4 space-y-1">
+                  <li>Create new projects via the project selector dropdown</li>
+                  <li>Edit project names and descriptions</li>
+                  <li>View all projects</li>
+                </ul>
+                <p className="mt-3"><span className="text-red-400 font-semibold">Admins only</span> can:</p>
+                <ul className="list-disc list-inside ml-4 space-y-1">
+                  <li>Delete projects (⚠️ deletes all categories and features within)</li>
+                </ul>
+                <p className="mt-3 text-yellow-400">
+                  <strong>Note:</strong> When you delete a project, all its categories and features are permanently removed.
+                </p>
+              </div>
+            </div>
           </div>
         </section>
 
@@ -63,29 +113,43 @@ export default function Help() {
           <div className="space-y-4">
             <div className="bg-gray-800 rounded-lg p-6">
               <h3 className="text-xl font-semibold mb-3">What are Categories?</h3>
-              <p className="text-gray-300">
-                Categories are high-level groupings that organize related features. For example:
+              <p className="text-gray-300 mb-3">
+                Categories are high-level groupings within a project that organize related features. For example:
                 "User Authentication", "Analytics Dashboard", "Mobile Application", etc.
+              </p>
+              <p className="text-gray-300">
+                <strong>Important:</strong> Each category belongs to a specific project. When you select a project,
+                you'll only see categories for that project.
               </p>
             </div>
 
             <div className="bg-gray-800 rounded-lg p-6">
               <h3 className="text-xl font-semibold mb-3">Creating a Category</h3>
-              <ol className="list-decimal list-inside space-y-2 text-gray-300">
-                <li>Click the <span className="bg-blue-600 px-2 py-1 rounded text-sm">+ Add Category</span> button in the sidebar</li>
-                <li>Enter a name (required) and description (optional)</li>
-                <li>Click "Add Category" to save</li>
-                <li>Your new category will appear in the sidebar</li>
-              </ol>
+              <div className="space-y-3 text-gray-300">
+                <p><span className="text-blue-400 font-semibold">Admins and Product Managers</span> can create categories:</p>
+                <ol className="list-decimal list-inside space-y-2 ml-4">
+                  <li>Select a project first (categories are created within the selected project)</li>
+                  <li>Click the <span className="bg-blue-600 px-2 py-1 rounded text-sm">+</span> icon in the sidebar</li>
+                  <li>Enter a name (required) and description (optional)</li>
+                  <li>Click "Add Category" to save</li>
+                  <li>Your new category will appear in the sidebar for the current project</li>
+                </ol>
+              </div>
             </div>
 
             <div className="bg-gray-800 rounded-lg p-6">
               <h3 className="text-xl font-semibold mb-3">Editing & Deleting Categories</h3>
-              <ul className="list-disc list-inside space-y-2 text-gray-300">
-                <li>Click the pencil icon next to a category to edit its name and description</li>
-                <li>Click the trash icon to delete a category</li>
-                <li><span className="text-yellow-400">Warning:</span> Deleting a category will also delete all its features</li>
-              </ul>
+              <div className="space-y-3 text-gray-300">
+                <p><span className="text-blue-400 font-semibold">Admins and Product Managers</span> can:</p>
+                <ul className="list-disc list-inside ml-4 space-y-2">
+                  <li>Click "Edit Category" button to modify name and description</li>
+                </ul>
+                <p className="mt-3"><span className="text-red-400 font-semibold">Admins only</span> can:</p>
+                <ul className="list-disc list-inside ml-4 space-y-2">
+                  <li>Delete categories using the "Delete Category" button</li>
+                  <li><span className="text-yellow-400">⚠️ Warning:</span> Deleting a category will also delete all its features</li>
+                </ul>
+              </div>
             </div>
           </div>
         </section>
@@ -210,12 +274,120 @@ export default function Help() {
           </div>
         </section>
 
+        {/* User Roles */}
+        <section id="roles" className="mb-12">
+          <h2 className="text-2xl font-bold mb-4 border-b border-gray-700 pb-2">User Roles & Permissions</h2>
+
+          <div className="space-y-4">
+            <div className="bg-gray-800 rounded-lg p-6">
+              <h3 className="text-xl font-semibold mb-3">Role-Based Access Control (RBAC)</h3>
+              <p className="text-gray-300 mb-4">
+                PRD Manager uses a global role system where each user has one role that applies across all projects.
+                The first user to register automatically becomes an Admin.
+              </p>
+            </div>
+
+            <div className="bg-gray-800 rounded-lg p-6">
+              <h3 className="text-xl font-semibold mb-3">Role Breakdown</h3>
+
+              <div className="space-y-6">
+                {/* Admin Role */}
+                <div className="border-l-4 border-red-500 pl-4">
+                  <h4 className="text-lg font-semibold text-red-400 mb-2">Admin</h4>
+                  <p className="text-gray-300 mb-2">Full system access with all permissions:</p>
+                  <ul className="list-disc list-inside space-y-1 text-gray-300 ml-4 text-sm">
+                    <li>Create, edit, and delete projects</li>
+                    <li>Create, edit, and delete categories</li>
+                    <li>Create, edit, and delete features</li>
+                    <li>Edit all feature fields (including engineering fields)</li>
+                    <li>Manage users and change user roles</li>
+                    <li>Export data to Excel, Word, and PowerPoint</li>
+                    <li>Import data from Excel</li>
+                  </ul>
+                </div>
+
+                {/* Product Manager Role */}
+                <div className="border-l-4 border-blue-500 pl-4">
+                  <h4 className="text-lg font-semibold text-blue-400 mb-2">Product Manager</h4>
+                  <p className="text-gray-300 mb-2">Manages product requirements and planning:</p>
+                  <ul className="list-disc list-inside space-y-1 text-gray-300 ml-4 text-sm">
+                    <li>Create and edit projects (cannot delete)</li>
+                    <li>Create and edit categories (cannot delete)</li>
+                    <li>Create, edit, and delete features</li>
+                    <li>Edit business fields (title, priority, description, KPI, customer name, release date)</li>
+                    <li>View engineering fields but cannot edit them</li>
+                    <li>Export data to Excel, Word, and PowerPoint</li>
+                    <li>Import data from Excel</li>
+                  </ul>
+                </div>
+
+                {/* Engineer Role */}
+                <div className="border-l-4 border-green-500 pl-4">
+                  <h4 className="text-lg font-semibold text-green-400 mb-2">Engineer</h4>
+                  <p className="text-gray-300 mb-2">Updates technical details for assigned features:</p>
+                  <ul className="list-disc list-inside space-y-1 text-gray-300 ml-4 text-sm">
+                    <li>View all projects, categories, and features</li>
+                    <li>Edit engineering fields on features assigned to them (engineering comment, signoff, complexity)</li>
+                    <li>Cannot create or delete projects, categories, or features</li>
+                    <li>Cannot edit business fields or unassigned features</li>
+                    <li>Can view the engineers list</li>
+                  </ul>
+                </div>
+
+                {/* Viewer Role */}
+                <div className="border-l-4 border-gray-500 pl-4">
+                  <h4 className="text-lg font-semibold text-gray-400 mb-2">Viewer</h4>
+                  <p className="text-gray-300 mb-2">Read-only access for stakeholders:</p>
+                  <ul className="list-disc list-inside space-y-1 text-gray-300 ml-4 text-sm">
+                    <li>View all projects, categories, and features</li>
+                    <li>View roadmap and dashboards</li>
+                    <li>Cannot create, edit, or delete anything</li>
+                    <li>Cannot export or import data</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-gray-800 rounded-lg p-6">
+              <h3 className="text-xl font-semibold mb-3">Managing Users</h3>
+              <div className="space-y-3 text-gray-300">
+                <p><span className="text-red-400 font-semibold">Admins only</span> can access user management:</p>
+                <ol className="list-decimal list-inside space-y-2 ml-4">
+                  <li>Click "Users" in the sidebar navigation</li>
+                  <li>View all registered users and their current roles</li>
+                  <li>Click the dropdown next to any user to change their role</li>
+                  <li>Changes take effect immediately</li>
+                </ol>
+                <p className="mt-3 bg-blue-900/30 border border-blue-700 rounded p-3">
+                  <strong>Note:</strong> Role changes apply globally across all projects. There are no per-project permissions.
+                </p>
+              </div>
+            </div>
+
+            <div className="bg-gray-800 rounded-lg p-6">
+              <h3 className="text-xl font-semibold mb-3">Engineer Assignment</h3>
+              <div className="space-y-2 text-gray-300">
+                <p><span className="text-blue-400 font-semibold">Admins and Product Managers</span> can assign engineers to features:</p>
+                <ul className="list-disc list-inside space-y-1 ml-4">
+                  <li>When editing a feature, select an engineer from the "Assigned Engineer" dropdown</li>
+                  <li>Assigned engineers can then edit engineering fields for that feature</li>
+                  <li>Unassigned features can only be edited by Admins and PMs</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* Tips */}
         <section id="tips" className="mb-12">
           <h2 className="text-2xl font-bold mb-4 border-b border-gray-700 pb-2">Tips & Best Practices</h2>
 
           <div className="bg-gray-800 rounded-lg p-6">
             <ul className="space-y-3 text-gray-300">
+              <li className="flex items-start">
+                <span className="text-blue-400 mr-2">💡</span>
+                <span><strong>Organize by projects:</strong> Use separate projects for different products, platforms, or major initiatives to keep things organized</span>
+              </li>
               <li className="flex items-start">
                 <span className="text-blue-400 mr-2">💡</span>
                 <span><strong>Use clear titles:</strong> Feature titles should be concise but descriptive enough to understand at a glance</span>
@@ -230,7 +402,11 @@ export default function Help() {
               </li>
               <li className="flex items-start">
                 <span className="text-blue-400 mr-2">💡</span>
-                <span><strong>Get engineering signoff early:</strong> Technical validation prevents surprises during implementation</span>
+                <span><strong>Assign engineers early:</strong> Assign features to engineers so they can provide technical feedback and signoff</span>
+              </li>
+              <li className="flex items-start">
+                <span className="text-blue-400 mr-2">💡</span>
+                <span><strong>Get engineering signoff:</strong> Technical validation prevents surprises during implementation</span>
               </li>
               <li className="flex items-start">
                 <span className="text-blue-400 mr-2">💡</span>
@@ -243,6 +419,14 @@ export default function Help() {
               <li className="flex items-start">
                 <span className="text-blue-400 mr-2">💡</span>
                 <span><strong>Use categories strategically:</strong> Group features by product area, team ownership, or business domain</span>
+              </li>
+              <li className="flex items-start">
+                <span className="text-blue-400 mr-2">💡</span>
+                <span><strong>Grant appropriate roles:</strong> Assign roles based on responsibilities - not everyone needs Admin access</span>
+              </li>
+              <li className="flex items-start">
+                <span className="text-blue-400 mr-2">💡</span>
+                <span><strong>Use the project selector:</strong> Switch between projects quickly using the dropdown at the top of the sidebar</span>
               </li>
             </ul>
           </div>
@@ -257,15 +441,35 @@ export default function Help() {
               more features and workflows that fit your team's needs.
             </p>
             <p className="text-gray-300">
-              The application is fully containerized with Docker and uses a SQLite database for persistence.
-              All your data is stored securely and persists across sessions.
+              The application is fully containerized with Docker and uses PostgreSQL for reliable data storage.
+              All your data is stored securely with proper role-based access control and persists across sessions.
             </p>
+          </div>
+        </section>
+
+        {/* Export/Import */}
+        <section className="mb-12">
+          <div className="bg-gray-800 rounded-lg p-6">
+            <h2 className="text-xl font-bold mb-3">Export & Import</h2>
+            <div className="space-y-3 text-gray-300">
+              <p><span className="text-blue-400 font-semibold">Admins and Product Managers</span> can export data:</p>
+              <ul className="list-disc list-inside ml-4 space-y-1">
+                <li><strong>Export to Excel:</strong> Get a detailed spreadsheet with all categories and features</li>
+                <li><strong>Export to Word:</strong> Generate a formatted PRD document</li>
+                <li><strong>Export Roadmap to PowerPoint:</strong> Create a visual timeline presentation</li>
+                <li><strong>Import from Excel:</strong> Bulk import categories and features from a spreadsheet</li>
+              </ul>
+              <p className="mt-3 text-sm text-gray-400">
+                Note: Exports include all categories for the currently selected project. Import assigns data to the default project.
+              </p>
+            </div>
           </div>
         </section>
 
         {/* Footer */}
         <div className="text-center text-gray-500 text-sm pt-8 border-t border-gray-800">
-          <p>PRD Manager - Built with Flask, React, and SQLite</p>
+          <p>PRD Manager - Built with Flask, React, and PostgreSQL</p>
+          <p className="mt-1">Full-stack application with role-based access control and multi-project support</p>
           <Link to="/" className="text-blue-400 hover:text-blue-300 mt-2 inline-block">
             Return to Dashboard →
           </Link>

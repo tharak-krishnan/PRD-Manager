@@ -96,18 +96,25 @@ class TestExportRoutes:
 class TestImportRoutes:
     """Functional tests for import routes"""
 
-    def test_import_prd_excel_success(self, client, auth_headers, category_with_features):
+    def test_import_prd_excel_success(self, client, auth_headers, category_with_features, sample_project):
         """Test importing PRD from Excel"""
         from app import db
+        from app.models import Project
 
         # First export to get a valid Excel file
         export_response = client.post('/api/export/prd/excel', headers=auth_headers)
         excel_data = export_response.data
 
-        # Clear database
+        # Clear database but keep project
         db.session.query(Feature).delete()
         db.session.query(Category).delete()
         db.session.commit()
+
+        # Ensure default project exists for import
+        if not Project.query.get(1):
+            default_proj = Project(id=1, name='Default Project', description='For imports')
+            db.session.add(default_proj)
+            db.session.commit()
 
         # Import the Excel file
         response = client.post(

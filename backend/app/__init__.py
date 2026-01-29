@@ -34,14 +34,23 @@ def create_app(config_name="development"):
     )
 
     # Import models (needed for migrations)
-    from app.models import User, Category, Feature
+    from app.models import User, Category, Feature, Project
 
     # Register blueprints
-    from app.routes import auth_bp, categories_bp, features_bp, export_bp
+    from app.routes import (
+        auth_bp,
+        categories_bp,
+        features_bp,
+        export_bp,
+        users_bp,
+        projects_bp,
+    )
 
     app.register_blueprint(auth_bp, url_prefix="/api/auth")
     app.register_blueprint(categories_bp, url_prefix="/api")
     app.register_blueprint(features_bp, url_prefix="/api")
     app.register_blueprint(export_bp, url_prefix="/api")
+    app.register_blueprint(users_bp, url_prefix="/api")
+    app.register_blueprint(projects_bp, url_prefix="/api")
 
     return app

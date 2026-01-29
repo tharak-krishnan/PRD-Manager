@@ -174,10 +174,11 @@ def import_prd_excel():
                 category_description = category_description.replace("Category: ", "", 1)
 
             # Create or update category
+            # Note: Import assumes default project (id=1) for backward compatibility
             category = Category.query.filter_by(name=sheet_name).first()
             if not category:
                 category = CategoryService.create_category(
-                    name=sheet_name, description=category_description
+                    name=sheet_name, project_id=1, description=category_description
                 )
                 imported_categories += 1
             else:

@@ -1,6 +1,16 @@
+import enum
 from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
 from app import db
+
+
+class UserRole(str, enum.Enum):
+    """User roles for RBAC"""
+
+    ADMIN = "admin"
+    PRODUCT_MANAGER = "product_manager"
+    ENGINEER = "engineer"
+    VIEWER = "viewer"
 
 
 class User(db.Model):
@@ -12,10 +22,14 @@ class User(db.Model):
     username = db.Column(db.String(80), unique=True, nullable=False, index=True)
     email = db.Column(db.String(120), unique=True, nullable=False, index=True)
     password_hash = db.Column(db.String(255), nullable=False)
+    role = db.Column(db.Enum(UserRole), nullable=False, default=UserRole.VIEWER)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(
         db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
     )
+
+    # Relationship for assigned features (backref will be added in Feature model)
+    assigned_features = db.relationship("Feature", backref="assigned_engineer", lazy=True)
 
     def set_password(self, password):
         """Hash and set password"""
@@ -31,6 +45,7 @@ class User(db.Model):
             "id": self.id,
             "username": self.username,
             "email": self.email,
+            "role": self.role.value,
             "created_at": self.created_at.isoformat() if self.created_at else None,
         }
 

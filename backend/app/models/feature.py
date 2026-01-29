@@ -44,6 +44,12 @@ class Feature(db.Model):
         db.Enum(TShirtSize), nullable=False, default=TShirtSize.M
     )
     release_date = db.Column(db.String(7), nullable=True)  # YYYY-MM format
+    assigned_engineer_id = db.Column(
+        db.Integer,
+        db.ForeignKey("users.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(
         db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
@@ -62,6 +68,7 @@ class Feature(db.Model):
             "engineeringSignoff": self.engineering_signoff,
             "engineeringComplexity": self.engineering_complexity.value,
             "releaseDate": self.release_date,
+            "assignedEngineerId": self.assigned_engineer_id,
         }
 
     def __repr__(self):

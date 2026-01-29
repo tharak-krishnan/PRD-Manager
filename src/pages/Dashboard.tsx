@@ -3,11 +3,13 @@ import Sidebar from '../components/Sidebar';
 import FeatureTable from '../components/FeatureTable';
 import Roadmap from '../components/Roadmap';
 import CategoryForm from '../components/CategoryForm';
+import ProjectSelectionScreen from '../components/ProjectSelectionScreen';
 import { useData } from '../context/DataContext';
 import { EditIcon, Trash2Icon, FileSpreadsheet, FileText, Upload } from 'lucide-react';
 import { apiClient } from '../services/api';
 const Dashboard: React.FC = () => {
   const {
+    selectedProjectId,
     categories,
     selectedCategoryId,
     deleteCategory
@@ -100,6 +102,9 @@ const Dashboard: React.FC = () => {
   };
   return <div className="flex h-screen overflow-hidden">
       <Sidebar />
+      {selectedProjectId === null ? (
+        <ProjectSelectionScreen />
+      ) : (
       <div className="flex-1 overflow-y-auto p-6 bg-gray-900">
         {/* Header with export and category buttons - only show when category is selected */}
         {selectedCategoryId && (
@@ -177,6 +182,7 @@ const Dashboard: React.FC = () => {
           </>}
         {!selectedCategoryId && <Roadmap />}
       </div>
+      )}
     </div>;
 };
 export default Dashboard;
