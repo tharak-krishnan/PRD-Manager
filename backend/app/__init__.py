@@ -33,9 +33,10 @@ def create_app(config_name='development'):
     from app.models import User, Category, Feature
 
     # Register blueprints
-    from app.routes import auth_bp, categories_bp, features_bp
+    from app.routes import auth_bp, categories_bp, features_bp, export_bp
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
     app.register_blueprint(categories_bp, url_prefix='/api')
     app.register_blueprint(features_bp, url_prefix='/api')
+    app.register_blueprint(export_bp, url_prefix='/api')
 
     return app

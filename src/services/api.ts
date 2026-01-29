@@ -88,6 +88,39 @@ class ApiClient {
     const response = await this.client.delete(`/features/${featureId}`);
     return response.data;
   }
+
+  // Export endpoints
+  async exportRoadmapPptx() {
+    const response = await this.client.post('/export/roadmap/pptx', {}, {
+      responseType: 'blob',
+    });
+    return response.data;
+  }
+
+  async exportPrdExcel() {
+    const response = await this.client.post('/export/prd/excel', {}, {
+      responseType: 'blob',
+    });
+    return response.data;
+  }
+
+  async exportPrdWord() {
+    const response = await this.client.post('/export/prd/word', {}, {
+      responseType: 'blob',
+    });
+    return response.data;
+  }
+
+  async importPrdExcel(file: File) {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await this.client.post('/import/prd/excel', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  }
 }
 
 export const apiClient = new ApiClient();

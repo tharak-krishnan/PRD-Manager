@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useData } from '../context/DataContext';
-import { PlusIcon, FolderIcon, BarChartIcon, HelpCircle } from 'lucide-react';
+import { PlusIcon, FolderIcon, BarChartIcon, HelpCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 const Sidebar: React.FC = () => {
   const {
     categories,
@@ -12,6 +12,8 @@ const Sidebar: React.FC = () => {
   const [showRoadmap, setShowRoadmap] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
   const [isAddingCategory, setIsAddingCategory] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 8;
   const handleAddCategory = () => {
     if (newCategoryName.trim()) {
       addCategory({
@@ -29,6 +31,19 @@ const Sidebar: React.FC = () => {
   const handleShowRoadmap = () => {
     setShowRoadmap(true);
     selectCategory(null);
+  };
+
+  // Pagination logic
+  const totalCategories = categories.length;
+  const totalPages = Math.ceil(totalCategories / itemsPerPage);
+  const paginatedCategories = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return categories.slice(startIndex, endIndex);
+  }, [categories, currentPage, itemsPerPage]);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
   };
   return <div className="w-64 h-full bg-gray-800 border-r border-gray-700 p-4 flex flex-col">
       <div className="flex items-center justify-between mb-6">
@@ -58,17 +73,48 @@ const Sidebar: React.FC = () => {
         </div>}
       <div className="flex-1 overflow-y-auto">
         <ul className="space-y-1">
-          {categories.map(category => <li key={category.id}>
-              <button onClick={() => handleSelectCategory(category.id)} className={`w-full text-left px-3 py-2 rounded-md flex items-center transition-colors ${selectedCategoryId === category.id ? 'bg-blue-900/50 text-blue-400' : 'text-gray-300 hover:bg-gray-700'}`}>
-                <FolderIcon size={18} className="mr-2" />
-                <span className="truncate">{category.name}</span>
-                <span className="ml-auto text-xs text-gray-500 bg-gray-700 px-1.5 py-0.5 rounded-full">
+          {paginatedCategories.map(category => <li key={category.id}>
+              <button onClick={() => handleSelectCategory(category.id)} className={`w-full text-left px-3 py-2 rounded-md flex items-center transition-colors ${selectedCategoryId === category.id ? 'bg-blue-900/50 text-blue-400' : 'text-gray-300 hover:bg-gray-700'}`} title={category.name}>
+                <FolderIcon size={18} className="mr-2 flex-shrink-0" />
+                <span className="truncate flex-1 min-w-0">{category.name}</span>
+                <span className="ml-2 flex-shrink-0 text-xs text-gray-500 bg-gray-700 px-1.5 py-0.5 rounded-full">
                   {category.features.length}
                 </span>
               </button>
             </li>)}
         </ul>
       </div>
+      {totalPages > 1 && (
+        <div className="mt-2 pt-2 border-t border-gray-700">
+          <div className="flex items-center justify-between px-2">
+            <button
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+              className={`p-1 rounded transition-colors ${
+                currentPage === 1
+                  ? 'text-gray-600 cursor-not-allowed'
+                  : 'text-gray-300 hover:bg-gray-700'
+              }`}
+            >
+              <ChevronLeft size={18} />
+            </button>
+            <span className="text-xs text-gray-400">
+              {currentPage} / {totalPages}
+            </span>
+            <button
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className={`p-1 rounded transition-colors ${
+                currentPage === totalPages
+                  ? 'text-gray-600 cursor-not-allowed'
+                  : 'text-gray-300 hover:bg-gray-700'
+              }`}
+            >
+              <ChevronRight size={18} />
+            </button>
+          </div>
+        </div>
+      )}
       <div className="mt-4 pt-4 border-t border-gray-700 space-y-1">
         <button onClick={handleShowRoadmap} className={`w-full text-left px-3 py-2 rounded-md flex items-center transition-colors ${showRoadmap ? 'bg-blue-900/50 text-blue-400' : 'text-gray-300 hover:bg-gray-700'}`}>
           <BarChartIcon size={18} className="mr-2" />
