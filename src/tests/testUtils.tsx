@@ -1,7 +1,6 @@
 import React, { ReactElement } from 'react';
 import { render, RenderOptions } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
-import { DataProvider } from '../context/DataContext';
 
 // Mock data
 export const mockCategories = [
@@ -58,7 +57,7 @@ export function renderWithProviders(
   function Wrapper({ children }: { children: React.ReactNode }) {
     return (
       <BrowserRouter>
-        <DataProvider>{children}</DataProvider>
+        {children}
       </BrowserRouter>
     );
   }

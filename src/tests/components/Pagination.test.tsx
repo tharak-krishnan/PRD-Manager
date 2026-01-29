@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, screen } from '../testUtils';
 import userEvent from '@testing-library/user-event';
 import Pagination from '../../components/Pagination';
@@ -51,7 +51,8 @@ describe('Pagination Component', () => {
       />
     );
 
-    const nextButton = screen.getAllByRole('button')[1]; // Second button is next
+    const buttons = screen.getAllByRole('button');
+    const nextButton = buttons[buttons.length - 1]; // Last button is next
     await user.click(nextButton);
 
     expect(mockOnPageChange).toHaveBeenCalledWith(3);
