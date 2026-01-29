@@ -6,6 +6,10 @@ import { apiClient } from '../../services/api';
 // Mock apiClient
 vi.mock('../../services/api', () => ({
   apiClient: {
+    getProjects: vi.fn(),
+    createProject: vi.fn(),
+    updateProject: vi.fn(),
+    deleteProject: vi.fn(),
     getCategories: vi.fn(),
     createCategory: vi.fn(),
     updateCategory: vi.fn(),
@@ -22,7 +26,10 @@ const TestComponent = () => {
   return (
     <div>
       <div data-testid="categories">{data.categories.length}</div>
+      <div data-testid="projects">{data.projects.length}</div>
+      <div data-testid="selectedProjectId">{data.selectedProjectId || 'null'}</div>
       <div data-testid="isLoading">{String(data.isLoading)}</div>
+      <button onClick={() => data.selectProject(1)}>SelectProject</button>
       <button onClick={() => data.addCategory({ name: 'New', description: 'Desc' })}>Add</button>
       <button onClick={() => data.updateCategory('1', { name: 'Updated' })}>Update</button>
       <button onClick={() => data.deleteCategory('1')}>Delete</button>
@@ -48,8 +55,12 @@ describe('DataContext', () => {
   });
 
   it('renders children when data is loaded', async () => {
-    const mockCategories = [{ id: '1', name: 'Cat1', description: 'Desc1', features: [] }];
-    localStorage.setItem('access_token', 'token');
+    const mockProjects = [{ id: 1, name: 'Project 1', description: 'Desc' }];
+    const mockCategories = [{ id: '1', name: 'Cat1', description: 'Desc1', features: [], project_id: 1 }];
+
+    // Configure localStorage mock to return token
+    vi.mocked(localStorage.getItem).mockReturnValue('token');
+    vi.mocked(apiClient.getProjects).mockResolvedValue(mockProjects);
     vi.mocked(apiClient.getCategories).mockResolvedValue(mockCategories);
 
     render(
@@ -58,16 +69,25 @@ describe('DataContext', () => {
       </DataProvider>
     );
 
+    // Wait for getProjects to be called and complete
     await waitFor(() => {
-      expect(screen.getByTestId('categories')).toBeInTheDocument();
+      expect(apiClient.getProjects).toHaveBeenCalled();
     });
+
+    // Wait for projects to load
+    await waitFor(() => {
+      expect(screen.getByTestId('projects')).toHaveTextContent('1');
+    }, { timeout: 3000 });
   });
 
   it('calls all CRUD methods', async () => {
-    const mockCategories = [{ id: '1', name: 'Cat1', description: 'Desc1', features: [] }];
-    localStorage.setItem('access_token', 'token');
+    const mockProjects = [{ id: 1, name: 'Project 1', description: 'Desc' }];
+    const mockCategories = [{ id: '1', name: 'Cat1', description: 'Desc1', features: [], project_id: 1 }];
+    // Configure localStorage mock to return token
+    vi.mocked(localStorage.getItem).mockReturnValue('token');
+    vi.mocked(apiClient.getProjects).mockResolvedValue(mockProjects);
     vi.mocked(apiClient.getCategories).mockResolvedValue(mockCategories);
-    vi.mocked(apiClient.createCategory).mockResolvedValue({ id: '2', name: 'New', description: 'Desc', features: [] });
+    vi.mocked(apiClient.createCategory).mockResolvedValue({ id: '2', name: 'New', description: 'Desc', features: [], project_id: 1 });
     vi.mocked(apiClient.updateCategory).mockResolvedValue({});
     vi.mocked(apiClient.deleteCategory).mockResolvedValue({});
     vi.mocked(apiClient.createFeature).mockResolvedValue({});
@@ -82,6 +102,12 @@ describe('DataContext', () => {
 
     await waitFor(() => {
       expect(screen.getByTestId('isLoading')).toHaveTextContent('false');
+    });
+
+    // Select project first
+    screen.getByText('SelectProject').click();
+    await waitFor(() => {
+      expect(screen.getByTestId('selectedProjectId')).toHaveTextContent('1');
     });
 
     // Test all methods
@@ -112,8 +138,9 @@ describe('DataContext', () => {
 
   it('handles errors gracefully', async () => {
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    localStorage.setItem('access_token', 'token');
-    vi.mocked(apiClient.getCategories).mockRejectedValue(new Error('Failed'));
+    // Configure localStorage mock to return token
+    vi.mocked(localStorage.getItem).mockReturnValue('token');
+    vi.mocked(apiClient.getProjects).mockRejectedValue(new Error('Failed'));
 
     render(
       <DataProvider>
@@ -128,6 +155,9 @@ describe('DataContext', () => {
   });
 
   it('skips fetching when not authenticated', () => {
+    // Reset localStorage mock to return null (no token)
+    vi.mocked(localStorage.getItem).mockReturnValue(null);
+    vi.mocked(apiClient.getProjects).mockResolvedValue([]);
     vi.mocked(apiClient.getCategories).mockResolvedValue([]);
 
     render(
@@ -137,6 +167,7 @@ describe('DataContext', () => {
     );
 
     // Should not call API when no token
+    expect(apiClient.getProjects).not.toHaveBeenCalled();
     expect(apiClient.getCategories).not.toHaveBeenCalled();
   });
 });

@@ -5,10 +5,20 @@ import Sidebar from '../../components/Sidebar';
 // Mock useData hook
 vi.mock('../../context/DataContext', () => ({
   useData: () => ({
+    projects: [{ id: 1, name: 'Test Project', description: 'Test' }],
+    selectedProjectId: 1,
     categories: mockCategories,
     selectedCategoryId: null,
     selectCategory: vi.fn(),
     addCategory: vi.fn(),
+  }),
+}));
+
+// Mock useAuth hook
+vi.mock('../../context/AuthContext', () => ({
+  useAuth: () => ({
+    user: { id: 1, username: 'test', role: 'admin' },
+    logout: vi.fn(),
   }),
 }));
 

@@ -63,7 +63,17 @@ describe('API Client', () => {
 
       const result = await apiClient.getCategories();
 
-      expect(mockGet).toHaveBeenCalledWith('/categories');
+      expect(mockGet).toHaveBeenCalledWith('/categories', { params: {} });
+      expect(result).toEqual(mockResponse.data);
+    });
+
+    it('gets categories filtered by project', async () => {
+      const mockResponse = { data: [{ id: '1', name: 'Cat1' }] };
+      mockGet.mockResolvedValue(mockResponse);
+
+      const result = await apiClient.getCategories(1);
+
+      expect(mockGet).toHaveBeenCalledWith('/categories', { params: { project_id: 1 } });
       expect(result).toEqual(mockResponse.data);
     });
 
@@ -71,9 +81,9 @@ describe('API Client', () => {
       const mockResponse = { data: { id: '1', name: 'New Cat' } };
       mockPost.mockResolvedValue(mockResponse);
 
-      const result = await apiClient.createCategory('New Cat', 'Description');
+      const result = await apiClient.createCategory('New Cat', 'Description', 1);
 
-      expect(mockPost).toHaveBeenCalledWith('/categories', { name: 'New Cat', description: 'Description' });
+      expect(mockPost).toHaveBeenCalledWith('/categories', { name: 'New Cat', description: 'Description', project_id: 1 });
       expect(result).toEqual(mockResponse.data);
     });
 
