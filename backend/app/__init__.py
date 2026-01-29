@@ -10,7 +10,8 @@ db = SQLAlchemy()
 jwt = JWTManager()
 migrate = Migrate()
 
-def create_app(config_name='development'):
+
+def create_app(config_name="development"):
     """Flask application factory"""
     app = Flask(__name__)
     app.config.from_object(config[config_name])
@@ -21,22 +22,26 @@ def create_app(config_name='development'):
     migrate.init_app(app, db)
 
     # Configure CORS
-    CORS(app, resources={
-        r"/api/*": {
-            "origins": app.config['CORS_ORIGINS'],
-            "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-            "allow_headers": ["Content-Type", "Authorization"]
-        }
-    })
+    CORS(
+        app,
+        resources={
+            r"/api/*": {
+                "origins": app.config["CORS_ORIGINS"],
+                "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+                "allow_headers": ["Content-Type", "Authorization"],
+            }
+        },
+    )
 
     # Import models (needed for migrations)
     from app.models import User, Category, Feature
 
     # Register blueprints
     from app.routes import auth_bp, categories_bp, features_bp, export_bp
-    app.register_blueprint(auth_bp, url_prefix='/api/auth')
-    app.register_blueprint(categories_bp, url_prefix='/api')
-    app.register_blueprint(features_bp, url_prefix='/api')
-    app.register_blueprint(export_bp, url_prefix='/api')
+
+    app.register_blueprint(auth_bp, url_prefix="/api/auth")
+    app.register_blueprint(categories_bp, url_prefix="/api")
+    app.register_blueprint(features_bp, url_prefix="/api")
+    app.register_blueprint(export_bp, url_prefix="/api")
 
     return app

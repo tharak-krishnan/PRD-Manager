@@ -1,6 +1,7 @@
 from app import db
 from app.models import User
 
+
 class AuthService:
     """Service layer for authentication operations"""
 

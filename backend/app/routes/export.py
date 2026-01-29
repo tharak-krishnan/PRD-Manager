@@ -1,5 +1,5 @@
 from flask import Blueprint, send_file, jsonify, request
-from flask_jwt_extended import jwt_required, get_jwt_identity
+from flask_jwt_extended import jwt_required
 from datetime import datetime
 from app.services.export_service import RoadmapExporter, PRDExporter
 from app.services import CategoryService
@@ -8,7 +8,8 @@ from app import db
 from openpyxl import load_workbook
 from io import BytesIO
 
-export_bp = Blueprint('export', __name__)
+export_bp = Blueprint("export", __name__)
+
 
 def parse_release_date(date_str):
     """Convert 'January 2024' format back to '2024-01' format"""
@@ -16,14 +17,14 @@ def parse_release_date(date_str):
         return None
     try:
         # Try parsing as "Month Year" format
-        date_obj = datetime.strptime(date_str, '%B %Y')
-        return date_obj.strftime('%Y-%m')
-    except:
+        date_obj = datetime.strptime(date_str, "%B %Y")
+        return date_obj.strftime("%Y-%m")
+    except (ValueError, TypeError):
         # Already in correct format or invalid
         return date_str
 
 
-@export_bp.route('/export/roadmap/pptx', methods=['POST'])
+@export_bp.route("/export/roadmap/pptx", methods=["POST"])
 @jwt_required()
 def export_roadmap_pptx():
     """Export roadmap to PowerPoint presentation"""
@@ -33,13 +34,18 @@ def export_roadmap_pptx():
 
         # Check if any features have release dates
         has_dates = any(
-            feature.release_date
-            for cat in categories
-            for feature in cat.features
+            feature.release_date for cat in categories for feature in cat.features
         )
 
         if not has_dates:
-            return jsonify({'error': 'No features with release dates found. Cannot generate roadmap.'}), 400
+            return (
+                jsonify(
+                    {
+                        "error": "No features with release dates found. Cannot generate roadmap."
+                    }
+                ),
+                400,
+            )
 
         # Generate PowerPoint
         exporter = RoadmapExporter(categories)
@@ -51,20 +57,20 @@ def export_roadmap_pptx():
         # Send file
         return send_file(
             pptx_buffer,
-            mimetype='application/vnd.openxmlformats-officedocument.presentationml.presentation',
+            mimetype="application/vnd.openxmlformats-officedocument.presentationml.presentation",
             as_attachment=True,
-            download_name=filename
+            download_name=filename,
         )
 
     except ValueError as e:
         # Handle specific errors from the exporter
-        return jsonify({'error': str(e)}), 400
+        return jsonify({"error": str(e)}), 400
     except Exception as e:
         # Handle unexpected errors
-        return jsonify({'error': f'Failed to generate PowerPoint: {str(e)}'}), 500
+        return jsonify({"error": f"Failed to generate PowerPoint: {str(e)}"}), 500
 
 
-@export_bp.route('/export/prd/excel', methods=['POST'])
+@export_bp.route("/export/prd/excel", methods=["POST"])
 @jwt_required()
 def export_prd_excel():
     """Export all categories and features to Excel"""
@@ -73,7 +79,7 @@ def export_prd_excel():
         categories = Category.query.all()
 
         if not categories:
-            return jsonify({'error': 'No categories found. Cannot generate PRD.'}), 400
+            return jsonify({"error": "No categories found. Cannot generate PRD."}), 400
 
         # Generate Excel
         exporter = PRDExporter(categories)
@@ -85,20 +91,20 @@ def export_prd_excel():
         # Send file
         return send_file(
             excel_buffer,
-            mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             as_attachment=True,
-            download_name=filename
+            download_name=filename,
         )
 
     except ValueError as e:
         # Handle specific errors from the exporter
-        return jsonify({'error': str(e)}), 400
+        return jsonify({"error": str(e)}), 400
     except Exception as e:
         # Handle unexpected errors
-        return jsonify({'error': f'Failed to generate Excel: {str(e)}'}), 500
+        return jsonify({"error": f"Failed to generate Excel: {str(e)}"}), 500
 
 
-@export_bp.route('/export/prd/word', methods=['POST'])
+@export_bp.route("/export/prd/word", methods=["POST"])
 @jwt_required()
 def export_prd_word():
     """Export all categories and features to Word document"""
@@ -107,7 +113,7 @@ def export_prd_word():
         categories = Category.query.all()
 
         if not categories:
-            return jsonify({'error': 'No categories found. Cannot generate PRD.'}), 400
+            return jsonify({"error": "No categories found. Cannot generate PRD."}), 400
 
         # Generate Word document
         exporter = PRDExporter(categories)
@@ -119,35 +125,35 @@ def export_prd_word():
         # Send file
         return send_file(
             word_buffer,
-            mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            mimetype="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
             as_attachment=True,
-            download_name=filename
+            download_name=filename,
         )
 
     except ValueError as e:
         # Handle specific errors from the exporter
-        return jsonify({'error': str(e)}), 400
+        return jsonify({"error": str(e)}), 400
     except Exception as e:
         # Handle unexpected errors
-        return jsonify({'error': f'Failed to generate Word document: {str(e)}'}), 500
+        return jsonify({"error": f"Failed to generate Word document: {str(e)}"}), 500
 
 
-@export_bp.route('/import/prd/excel', methods=['POST'])
+@export_bp.route("/import/prd/excel", methods=["POST"])
 @jwt_required()
 def import_prd_excel():
     """Import categories and features from Excel file"""
     try:
         # Check if file is present
-        if 'file' not in request.files:
-            return jsonify({'error': 'No file provided'}), 400
+        if "file" not in request.files:
+            return jsonify({"error": "No file provided"}), 400
 
-        file = request.files['file']
+        file = request.files["file"]
 
-        if file.filename == '':
-            return jsonify({'error': 'No file selected'}), 400
+        if file.filename == "":
+            return jsonify({"error": "No file selected"}), 400
 
-        if not file.filename.endswith('.xlsx'):
-            return jsonify({'error': 'File must be an Excel file (.xlsx)'}), 400
+        if not file.filename.endswith(".xlsx"):
+            return jsonify({"error": "File must be an Excel file (.xlsx)"}), 400
 
         # Read the Excel file
         wb = load_workbook(filename=BytesIO(file.read()))
@@ -157,20 +163,22 @@ def import_prd_excel():
         imported_features = 0
 
         for sheet_name in wb.sheetnames:
-            if sheet_name in ['Summary', 'PRD Summary']:
+            if sheet_name in ["Summary", "PRD Summary"]:
                 continue
 
             sheet = wb[sheet_name]
 
             # Get category description from the sheet (should be in row 1)
-            category_description = sheet.cell(row=1, column=1).value or ''
-            if category_description.startswith('Category: '):
-                category_description = category_description.replace('Category: ', '', 1)
+            category_description = sheet.cell(row=1, column=1).value or ""
+            if category_description.startswith("Category: "):
+                category_description = category_description.replace("Category: ", "", 1)
 
             # Create or update category
             category = Category.query.filter_by(name=sheet_name).first()
             if not category:
-                category = CategoryService.create_category(name=sheet_name, description=category_description)
+                category = CategoryService.create_category(
+                    name=sheet_name, description=category_description
+                )
                 imported_categories += 1
             else:
                 category.description = category_description
@@ -185,15 +193,17 @@ def import_prd_excel():
                 if not feature_id:
                     break
 
-                title = sheet.cell(row=row_num, column=2).value or ''
-                priority = sheet.cell(row=row_num, column=3).value or 'Medium'
-                description = sheet.cell(row=row_num, column=4).value or ''
-                kpi = sheet.cell(row=row_num, column=5).value or ''
-                customer_name = sheet.cell(row=row_num, column=6).value or ''
-                engineering_comment = sheet.cell(row=row_num, column=7).value or ''
-                engineering_signoff_str = sheet.cell(row=row_num, column=8).value or 'No'
-                engineering_signoff = engineering_signoff_str == 'Yes'
-                engineering_complexity = sheet.cell(row=row_num, column=9).value or 'M'
+                title = sheet.cell(row=row_num, column=2).value or ""
+                priority = sheet.cell(row=row_num, column=3).value or "Medium"
+                description = sheet.cell(row=row_num, column=4).value or ""
+                kpi = sheet.cell(row=row_num, column=5).value or ""
+                customer_name = sheet.cell(row=row_num, column=6).value or ""
+                engineering_comment = sheet.cell(row=row_num, column=7).value or ""
+                engineering_signoff_str = (
+                    sheet.cell(row=row_num, column=8).value or "No"
+                )
+                engineering_signoff = engineering_signoff_str == "Yes"
+                engineering_complexity = sheet.cell(row=row_num, column=9).value or "M"
                 release_date_val = sheet.cell(row=row_num, column=10).value
 
                 # Parse release date
@@ -204,8 +214,8 @@ def import_prd_excel():
                     else:
                         # If it's a datetime object, format it
                         try:
-                            release_date = release_date_val.strftime('%Y-%m')
-                        except:
+                            release_date = release_date_val.strftime("%Y-%m")
+                        except (AttributeError, TypeError):
                             release_date = None
 
                 # Check if feature already exists
@@ -223,7 +233,7 @@ def import_prd_excel():
                         engineering_signoff=engineering_signoff,
                         engineering_complexity=engineering_complexity,
                         release_date=release_date,
-                        category_id=category.id
+                        category_id=category.id,
                     )
                     db.session.add(feature)
                     imported_features += 1
@@ -245,12 +255,17 @@ def import_prd_excel():
         # Commit all changes
         db.session.commit()
 
-        return jsonify({
-            'message': 'Import successful',
-            'categories_imported': imported_categories,
-            'features_imported': imported_features
-        }), 200
+        return (
+            jsonify(
+                {
+                    "message": "Import successful",
+                    "categories_imported": imported_categories,
+                    "features_imported": imported_features,
+                }
+            ),
+            200,
+        )
 
     except Exception as e:
         db.session.rollback()
-        return jsonify({'error': f'Failed to import Excel file: {str(e)}'}), 500
+        return jsonify({"error": f"Failed to import Excel file: {str(e)}"}), 500

@@ -1,11 +1,12 @@
 from app import db
 from app.models import Category
 
+
 class CategoryService:
     """Service layer for category operations"""
 
     @staticmethod
-    def create_category(name, description=''):
+    def create_category(name, description=""):
         """Create a new category"""
         # Generate new ID based on existing count
         existing_count = Category.query.count()
