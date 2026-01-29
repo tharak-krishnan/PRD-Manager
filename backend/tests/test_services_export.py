@@ -63,7 +63,7 @@ class TestRoadmapExporter:
                   '2024-07', '2024-08', '2024-09', '2024-10', '2024-11', '2024-12']
 
         exporter = RoadmapExporter([])
-        chunks = exporter._chunk_timeline(months, chunk_size=6)
+        chunks = list(exporter._chunk_timeline(months, chunk_size=6))
 
         assert len(chunks) == 2
         assert len(chunks[0]) == 6
@@ -92,7 +92,7 @@ class TestPRDExporter:
 
         # Verify it's a valid workbook
         wb = load_workbook(excel_buffer)
-        assert 'Summary' in wb.sheetnames
+        assert 'PRD Summary' in wb.sheetnames
         assert category.name in wb.sheetnames
 
     def test_generate_word(self, client, category_with_features):
@@ -121,19 +121,19 @@ class TestPRDExporter:
         excel_buffer.seek(0)
 
         wb = load_workbook(excel_buffer)
-        summary_sheet = wb['Summary']
+        summary_sheet = wb['PRD Summary']
 
         # Check summary sheet has headers
-        assert summary_sheet.cell(1, 1).value == 'Product Requirements Document - Summary'
+        assert summary_sheet.cell(1, 1).value == 'Product Requirements Document (PRD)'
 
         # Check category sheet has correct headers
         category_sheet = wb[category.name]
         expected_headers = ['ID', 'Title', 'Priority', 'Description', 'KPI',
-                           'Customer Name', 'Engineering Comment',
-                           'Engineering Signoff', 'Engineering Complexity', 'Release Date']
+                           'Customer', 'Eng. Comment',
+                           'Signoff', 'Complexity', 'Release Date']
 
         for col, expected_header in enumerate(expected_headers, start=1):
-            assert category_sheet.cell(3, col).value == expected_header
+            assert category_sheet.cell(4, col).value == expected_header
 
     def test_word_has_table_of_contents(self, client, category_with_features):
         """Test Word document has table of contents"""
@@ -153,11 +153,13 @@ class TestPRDExporter:
         """Test generating Excel with empty categories"""
         from app.models import Category
 
-        empty_category = Category(name='Empty Category', description='No features')
+        empty_category = Category(id='cat-empty', name='Empty Category', description='No features')
         exporter = PRDExporter([empty_category])
 
         excel_buffer = exporter.generate_excel()
         excel_buffer.seek(0)
 
         wb = load_workbook(excel_buffer)
-        assert 'Empty Category' in wb.sheetnames
+        # Empty categories should not have their own sheet, only PRD Summary
+        assert 'PRD Summary' in wb.sheetnames
+        assert 'Empty Category' not in wb.sheetnames

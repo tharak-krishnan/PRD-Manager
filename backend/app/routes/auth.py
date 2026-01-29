@@ -18,11 +18,16 @@ def register():
     if AuthService.get_user_by_username(data['username']):
         return jsonify({'error': 'Username already exists'}), 409
 
+    if User.query.filter_by(email=data['email']).first():
+        return jsonify({'error': 'Email already exists'}), 409
+
     # Create user
     try:
         user = AuthService.create_user(data['username'], data['email'], data['password'])
+        access_token = create_access_token(identity=str(user.id))
         return jsonify({
             'message': 'User created successfully',
+            'access_token': access_token,
             'user': user.to_dict()
         }), 201
     except Exception as e:

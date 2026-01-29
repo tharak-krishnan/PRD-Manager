@@ -73,6 +73,7 @@ def sample_user():
 def sample_category():
     """Create a sample category"""
     category = Category(
+        id='cat-1',
         name='Test Category',
         description='Test category description'
     )
@@ -108,6 +109,7 @@ def multiple_categories():
     categories = []
     for i in range(5):
         category = Category(
+            id=f'cat-{i+1}',
             name=f'Category {i+1}',
             description=f'Description for category {i+1}'
         )

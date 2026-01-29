@@ -2,6 +2,7 @@ from flask import Blueprint, send_file, jsonify, request
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from datetime import datetime
 from app.services.export_service import RoadmapExporter, PRDExporter
+from app.services import CategoryService
 from app.models import Category, Feature
 from app import db
 from openpyxl import load_workbook
@@ -22,7 +23,7 @@ def export_roadmap_pptx():
         has_dates = any(
             feature.release_date
             for cat in categories
-            for feature in cat.features.all()
+            for feature in cat.features
         )
 
         if not has_dates:
@@ -157,12 +158,11 @@ def import_prd_excel():
             # Create or update category
             category = Category.query.filter_by(name=sheet_name).first()
             if not category:
-                category = Category(name=sheet_name, description=category_description)
-                db.session.add(category)
-                db.session.flush()
+                category = CategoryService.create_category(name=sheet_name, description=category_description)
                 imported_categories += 1
             else:
                 category.description = category_description
+                db.session.add(category)
 
             # Read features from row 4 onwards (row 3 is header)
             row_num = 4

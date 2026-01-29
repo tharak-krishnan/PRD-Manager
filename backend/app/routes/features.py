@@ -1,5 +1,6 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required
+from werkzeug.exceptions import NotFound
 from app.services import FeatureService
 
 features_bp = Blueprint('features', __name__)
@@ -37,6 +38,8 @@ def create_feature(category_id):
             release_date=data.get('releaseDate', '')
         )
         return jsonify(feature.to_dict()), 201
+    except NotFound:
+        return jsonify({'error': 'Category not found'}), 404
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -49,6 +52,8 @@ def update_feature(feature_id):
     try:
         feature = FeatureService.update_feature(feature_id, **data)
         return jsonify(feature.to_dict()), 200
+    except NotFound:
+        return jsonify({'error': 'Feature not found'}), 404
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -59,5 +64,7 @@ def delete_feature(feature_id):
     try:
         FeatureService.delete_feature(feature_id)
         return jsonify({'message': 'Feature deleted successfully'}), 200
+    except NotFound:
+        return jsonify({'error': 'Feature not found'}), 404
     except Exception as e:
         return jsonify({'error': str(e)}), 500

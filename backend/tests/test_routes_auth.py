@@ -28,7 +28,7 @@ class TestAuthRoutes:
             'password': 'password123'
         })
 
-        assert response.status_code == 400
+        assert response.status_code == 409
         assert 'error' in response.json
 
     def test_register_duplicate_email(self, client, sample_user):
@@ -39,7 +39,7 @@ class TestAuthRoutes:
             'password': 'password123'
         })
 
-        assert response.status_code == 400
+        assert response.status_code == 409
         assert 'error' in response.json
 
     def test_register_missing_fields(self, client):

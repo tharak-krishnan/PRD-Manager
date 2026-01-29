@@ -119,11 +119,11 @@ class TestFeatureRoutes:
                 'priority': 'High',
                 'description': 'Feature description',
                 'kpi': 'Test KPI',
-                'customer_name': 'Customer',
-                'engineering_comment': 'Comment',
-                'engineering_signoff': True,
-                'engineering_complexity': 'M',
-                'release_date': '2024-06'
+                'customerName': 'Customer',
+                'engineeringComment': 'Comment',
+                'engineeringSignoff': True,
+                'engineeringComplexity': 'M',
+                'releaseDate': '2024-06'
             }
         )
 
@@ -150,14 +150,14 @@ class TestFeatureRoutes:
             json={
                 'title': 'Updated Feature',
                 'priority': 'Low',
-                'engineering_signoff': False
+                'engineeringSignoff': False
             }
         )
 
         assert response.status_code == 200
         assert response.json['title'] == 'Updated Feature'
         assert response.json['priority'] == 'Low'
-        assert response.json['engineering_signoff'] is False
+        assert response.json['engineeringSignoff'] is False
 
     def test_update_nonexistent_feature(self, client, auth_headers):
         """Test updating a feature that doesn't exist"""

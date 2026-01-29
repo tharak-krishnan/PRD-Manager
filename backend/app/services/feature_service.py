@@ -11,7 +11,7 @@ class FeatureService:
         """Create a new feature in a category"""
         # Get category to generate feature ID
         category = Category.query.get_or_404(category_id)
-        feature_count = category.features.count()
+        feature_count = len(category.features)
         new_feature_id = f"{category_id}.{feature_count + 1}"
 
         feature = Feature(

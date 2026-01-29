@@ -29,3 +29,7 @@ class User(db.Model):
             'email': self.email,
             'created_at': self.created_at.isoformat() if self.created_at else None
         }
+
+    def __repr__(self):
+        """String representation of User"""
+        return f'<User {self.username}>'

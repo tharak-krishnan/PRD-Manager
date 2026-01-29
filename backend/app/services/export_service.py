@@ -285,7 +285,7 @@ class RoadmapExporter:
         """Extract all features with release dates and category info"""
         features = []
         for category in self.categories:
-            for feature in category.features.all():
+            for feature in category.features:
                 if feature.release_date:
                     features.append({
                         'id': feature.id,
@@ -366,7 +366,7 @@ class PRDExporter:
         
         # Create a sheet for each category
         for category in self.categories:
-            if category.features.all():
+            if category.features:
                 sheet = wb.create_sheet(self._sanitize_sheet_name(category.name))
                 self._create_category_sheet(sheet, category)
         
@@ -406,7 +406,7 @@ class PRDExporter:
         # Data rows
         row = 5
         for category in self.categories:
-            features = category.features.all()
+            features = category.features
             high_count = sum(1 for f in features if f.priority.value == 'High')
             medium_count = sum(1 for f in features if f.priority.value == 'Medium')
             low_count = sum(1 for f in features if f.priority.value == 'Low')
@@ -445,7 +445,7 @@ class PRDExporter:
         
         # Feature rows
         row = 5
-        for feature in category.features.all():
+        for feature in category.features:
             sheet.cell(row=row, column=1, value=feature.id)
             sheet.cell(row=row, column=2, value=feature.title)
             sheet.cell(row=row, column=3, value=feature.priority.value)
@@ -530,7 +530,7 @@ class PRDExporter:
             doc.add_paragraph()  # Spacing
         
         # Features
-        features = category.features.all()
+        features = category.features
         if not features:
             doc.add_paragraph('No features in this category.')
             return

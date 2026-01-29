@@ -1,5 +1,6 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required
+from werkzeug.exceptions import NotFound
 from app.services import CategoryService
 
 categories_bp = Blueprint('categories', __name__)
@@ -58,6 +59,8 @@ def update_category(category_id):
             description=data.get('description')
         )
         return jsonify(category.to_dict(include_features=False)), 200
+    except NotFound:
+        return jsonify({'error': 'Category not found'}), 404
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -68,5 +71,7 @@ def delete_category(category_id):
     try:
         CategoryService.delete_category(category_id)
         return jsonify({'message': 'Category deleted successfully'}), 200
+    except NotFound:
+        return jsonify({'error': 'Category not found'}), 404
     except Exception as e:
         return jsonify({'error': str(e)}), 500

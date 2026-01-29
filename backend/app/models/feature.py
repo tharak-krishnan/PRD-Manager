@@ -48,3 +48,7 @@ class Feature(db.Model):
             'engineeringComplexity': self.engineering_complexity.value,
             'releaseDate': self.release_date
         }
+
+    def __repr__(self):
+        """String representation of Feature"""
+        return f'<Feature {self.id}: {self.title}>'

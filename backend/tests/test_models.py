@@ -55,13 +55,14 @@ class TestCategoryModel:
     def test_category_creation(self, client):
         """Test creating a new category"""
         category = Category(
+            id='cat-test',
             name='New Category',
             description='New description'
         )
         db.session.add(category)
         db.session.commit()
 
-        assert category.id is not None
+        assert category.id == 'cat-test'
         assert category.name == 'New Category'
         assert category.description == 'New description'
 
@@ -72,7 +73,7 @@ class TestCategoryModel:
     def test_category_features_relationship(self, client, category_with_features):
         """Test relationship between category and features"""
         category, features = category_with_features
-        assert len(category.features.all()) == 10
+        assert len(category.features) == 10
         assert all(f.category_id == category.id for f in features)
 
 
@@ -114,8 +115,8 @@ class TestFeatureModel:
         assert feature_dict['id'] == 'F-001'
         assert feature_dict['title'] == 'Test Feature'
         assert feature_dict['priority'] == 'High'
-        assert feature_dict['engineering_signoff'] is True
-        assert feature_dict['engineering_complexity'] == 'M'
+        assert feature_dict['engineeringSignoff'] is True
+        assert feature_dict['engineeringComplexity'] == 'M'
 
     def test_feature_priorities(self, client, sample_category):
         """Test different priority levels"""

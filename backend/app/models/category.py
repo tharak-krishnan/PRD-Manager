@@ -12,7 +12,7 @@ class Category(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     # Relationship to features
-    features = db.relationship('Feature', backref='category', lazy='dynamic', cascade='all, delete-orphan')
+    features = db.relationship('Feature', backref='category', lazy='select', cascade='all, delete-orphan')
 
     def to_dict(self, include_features=True):
         """Convert category to dictionary"""
@@ -23,6 +23,10 @@ class Category(db.Model):
         }
 
         if include_features:
-            result['features'] = [f.to_dict() for f in self.features.all()]
+            result['features'] = [f.to_dict() for f in self.features]
 
         return result
+
+    def __repr__(self):
+        """String representation of Category"""
+        return f'<Category {self.name}>'
