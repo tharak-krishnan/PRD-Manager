@@ -34,6 +34,9 @@ venv/
 ENV/
 instance/
 .pytest_cache/
+coverage/
+htmlcov/
+.coverage
 
 # Claude Code
 .claude/
