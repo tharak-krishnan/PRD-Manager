@@ -30,7 +30,7 @@ vi.mock('../../context/AuthContext', () => ({
 describe('Register', () => {
   it('renders registration form', () => {
     render(
-      <BrowserRouter>
+      <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <Register />
       </BrowserRouter>
     );
@@ -41,7 +41,7 @@ describe('Register', () => {
 
   it('has password labels', () => {
     render(
-      <BrowserRouter>
+      <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <Register />
       </BrowserRouter>
     );
@@ -51,7 +51,7 @@ describe('Register', () => {
 
   it('has a create account button', () => {
     render(
-      <BrowserRouter>
+      <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <Register />
       </BrowserRouter>
     );
@@ -60,7 +60,7 @@ describe('Register', () => {
 
   it('has a link to login', () => {
     render(
-      <BrowserRouter>
+      <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <Register />
       </BrowserRouter>
     );

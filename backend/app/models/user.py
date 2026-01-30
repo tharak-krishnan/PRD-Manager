@@ -28,8 +28,19 @@ class User(db.Model):
         db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
     )
 
-    # Relationship for assigned features (backref will be added in Feature model)
-    assigned_features = db.relationship("Feature", backref="assigned_engineer", lazy=True)
+    # Relationships for features
+    assigned_features = db.relationship(
+        "Feature",
+        foreign_keys="[Feature.assigned_engineer_id]",
+        backref="assigned_engineer",
+        lazy=True
+    )
+    signed_off_features = db.relationship(
+        "Feature",
+        foreign_keys="[Feature.signed_off_by_id]",
+        backref="signed_off_by",
+        lazy=True
+    )
 
     def set_password(self, password):
         """Hash and set password"""

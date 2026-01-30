@@ -35,6 +35,29 @@ def client(app):
 
 
 @pytest.fixture(scope='function')
+def seeded_app(app):
+    """Create app with database tables for seeding tests"""
+    with app.app_context():
+        db.create_all()
+        yield app
+        db.session.remove()
+        db.drop_all()
+
+
+@pytest.fixture(scope='function')
+def seeded_client(app):
+    """Create test client with seeded data"""
+    with app.test_client() as client:
+        with app.app_context():
+            from app.seed_data import seed_database
+            db.create_all()
+            seed_database()
+            yield client
+            db.session.remove()
+            db.drop_all()
+
+
+@pytest.fixture(scope='function')
 def runner(app):
     """Create test CLI runner"""
     return app.test_cli_runner()

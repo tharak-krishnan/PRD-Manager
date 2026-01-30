@@ -1,4 +1,4 @@
-import React, { useState, createContext, useContext, useEffect, ReactNode } from 'react';
+import React, { useState, createContext, useContext, useEffect, ReactNode, useCallback } from 'react';
 import { apiClient } from '../services/api';
 
 export type Priority = 'High' | 'Medium' | 'Low';
@@ -24,6 +24,9 @@ export interface Feature {
   engineeringComplexity: TShirtSize;
   releaseDate: string; // YYYY-MM format
   assignedEngineerId?: number;
+  assignedEngineerName?: string;
+  signedOffById?: number;
+  signedOffByName?: string;
 }
 
 export interface Category {
@@ -87,7 +90,7 @@ export const DataProvider: React.FC<{
     }
   };
 
-  const refreshCategories = async () => {
+  const refreshCategories = useCallback(async () => {
     if (selectedProjectId === null) {
       setCategories([]);
       return;
@@ -102,7 +105,7 @@ export const DataProvider: React.FC<{
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [selectedProjectId]);
 
   // Fetch projects on mount
   useEffect(() => {
@@ -123,7 +126,7 @@ export const DataProvider: React.FC<{
       setCategories([]);
       setIsLoading(false);
     }
-  }, [selectedProjectId]);
+  }, [selectedProjectId, refreshCategories]);
 
   const addProject = async (project: Omit<Project, 'id' | 'created_at' | 'updated_at'>) => {
     try {

@@ -1,9 +1,9 @@
 import React, { useState, useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useData } from '../context/DataContext';
 import { useAuth } from '../context/AuthContext';
 import { canManageUsers } from '../utils/permissions';
-import { PlusIcon, FolderIcon, BarChartIcon, HelpCircle, ChevronLeft, ChevronRight, Users, LogOut, Menu, X } from 'lucide-react';
+import { PlusIcon, FolderIcon, BarChartIcon, HelpCircle, ChevronLeft, ChevronRight, Users, LogOut, X, CheckSquare } from 'lucide-react';
 import ProjectSelector from './ProjectSelector';
 
 interface SidebarProps {
@@ -20,6 +20,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen = true, onClose }) => {
     addCategory
   } = useData();
   const { user, logout } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
   const [showRoadmap, setShowRoadmap] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
   const [isAddingCategory, setIsAddingCategory] = useState(false);
@@ -52,6 +54,10 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen = true, onClose }) => {
   const handleSelectCategory = (id: string) => {
     selectCategory(id);
     setShowRoadmap(false);
+    // Navigate to dashboard to show the selected category
+    if (location.pathname !== '/') {
+      navigate('/');
+    }
     // Close mobile menu when selecting a category
     if (onClose) onClose();
   };
@@ -59,6 +65,10 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen = true, onClose }) => {
   const handleShowRoadmap = () => {
     setShowRoadmap(true);
     selectCategory(null);
+    // Navigate to dashboard to show the roadmap
+    if (location.pathname !== '/') {
+      navigate('/');
+    }
     // Close mobile menu when showing roadmap
     if (onClose) onClose();
   };
@@ -209,6 +219,20 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen = true, onClose }) => {
           <BarChartIcon size={18} className="mr-2" />
           <span>Roadmap</span>
         </button>
+        {user && user.role === 'engineer' && (
+          <Link
+            to="/my-tasks"
+            className={`w-full text-left px-3 py-2 rounded-md flex items-center transition-colors block ${
+              location.pathname === '/my-tasks'
+                ? 'bg-blue-900/50 text-blue-400'
+                : 'text-gray-300 hover:bg-gray-700'
+            }`}
+            onClick={onClose}
+          >
+            <CheckSquare size={18} className="mr-2" />
+            <span>My Tasks</span>
+          </Link>
+        )}
         {user && canManageUsers(user.role) && (
           <Link to="/users" className="w-full text-left px-3 py-2 rounded-md flex items-center transition-colors text-gray-300 hover:bg-gray-700 block">
             <Users size={18} className="mr-2" />

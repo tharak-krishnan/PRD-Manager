@@ -98,7 +98,12 @@ export function renderWithProviders(
 
   function Wrapper({ children }: { children: React.ReactNode }) {
     return (
-      <BrowserRouter>
+      <BrowserRouter
+        future={{
+          v7_startTransition: true,
+          v7_relativeSplatPath: true,
+        }}
+      >
         <AuthContext.Provider value={authValue || defaultAuthValue}>
           <DataContext.Provider value={dataValue || defaultDataValue}>
             {children}

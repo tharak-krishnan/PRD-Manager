@@ -4,7 +4,9 @@ import { App } from "./App";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Help from "./pages/Help";
+import MyTasks from "./pages/MyTasks";
 import UserManagement from "./components/UserManagement";
+import Layout from "./components/Layout";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 
 // Protected route component
@@ -24,7 +26,12 @@ const PrivateRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => 
 
 export function AppRouter() {
   return (
-    <BrowserRouter>
+    <BrowserRouter
+      future={{
+        v7_startTransition: true,
+        v7_relativeSplatPath: true,
+      }}
+    >
       <AuthProvider>
         <Routes>
           <Route path="/login" element={<Login />} />
@@ -42,6 +49,16 @@ export function AppRouter() {
             element={
               <PrivateRoute>
                 <UserManagement />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/my-tasks"
+            element={
+              <PrivateRoute>
+                <Layout>
+                  <MyTasks />
+                </Layout>
               </PrivateRoute>
             }
           />

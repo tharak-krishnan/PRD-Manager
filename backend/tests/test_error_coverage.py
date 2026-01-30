@@ -174,7 +174,6 @@ class TestServiceErrorCoverage:
     def test_feature_service_update_fields(self, client, sample_feature):
         """Test feature update with all optional fields"""
         from app.services import FeatureService
-        from app import db
 
         # Update with all optional fields
         updated = FeatureService.update_feature(
@@ -202,8 +201,6 @@ class TestExportServiceCoverage:
     def test_roadmap_export_no_dates(self, client, sample_project):
         """Test roadmap export when no features have dates"""
         from app.services.export_service import RoadmapExporter
-        from app.models import Category
-        from app import db
 
         # Create category with feature but no date
         cat = Category(id='cat-test', name='Test', description='Test', project_id=sample_project.id)

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, act } from '@testing-library/react';
 import { DataProvider, useData } from '../../context/DataContext';
 import { apiClient } from '../../services/api';
 
@@ -105,34 +105,52 @@ describe('DataContext', () => {
     });
 
     // Select project first
-    screen.getByText('SelectProject').click();
+    await act(async () => {
+      screen.getByText('SelectProject').click();
+    });
     await waitFor(() => {
       expect(screen.getByTestId('selectedProjectId')).toHaveTextContent('1');
     });
 
     // Test all methods
-    screen.getByText('Add').click();
+    await act(async () => {
+      screen.getByText('Add').click();
+    });
     await waitFor(() => expect(apiClient.createCategory).toHaveBeenCalled());
 
-    screen.getByText('Update').click();
+    await act(async () => {
+      screen.getByText('Update').click();
+    });
     await waitFor(() => expect(apiClient.updateCategory).toHaveBeenCalled());
 
-    screen.getByText('Delete').click();
+    await act(async () => {
+      screen.getByText('Delete').click();
+    });
     await waitFor(() => expect(apiClient.deleteCategory).toHaveBeenCalled());
 
-    screen.getByText('Select').click();
+    await act(async () => {
+      screen.getByText('Select').click();
+    });
 
-    screen.getByText('AddF').click();
+    await act(async () => {
+      screen.getByText('AddF').click();
+    });
     await waitFor(() => expect(apiClient.createFeature).toHaveBeenCalled());
 
-    screen.getByText('UpdateF').click();
+    await act(async () => {
+      screen.getByText('UpdateF').click();
+    });
     await waitFor(() => expect(apiClient.updateFeature).toHaveBeenCalled());
 
-    screen.getByText('DeleteF').click();
+    await act(async () => {
+      screen.getByText('DeleteF').click();
+    });
     await waitFor(() => expect(apiClient.deleteFeature).toHaveBeenCalled());
 
     vi.clearAllMocks();
-    screen.getByText('Refresh').click();
+    await act(async () => {
+      screen.getByText('Refresh').click();
+    });
     await waitFor(() => expect(apiClient.getCategories).toHaveBeenCalled());
   });
 
