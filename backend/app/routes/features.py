@@ -83,13 +83,23 @@ def update_feature(feature_id):
             }
             data = {k: v for k, v in data.items() if k in allowed_fields}
 
+            # If engineer is signing off, record who signed it off
+            if data.get("engineeringSignoff"):
+                data["signedOffById"] = user.id
+
         elif user.role == UserRole.PRODUCT_MANAGER:
             # PM cannot edit engineering fields
             data.pop("engineeringComment", None)
             data.pop("engineeringSignoff", None)
             data.pop("engineeringComplexity", None)
+            data.pop("signedOffById", None)
 
-        # Admin can edit everything (no filtering)
+        # Admin can edit everything (no filtering) but enforce sign-off logic
+        elif user.role == UserRole.ADMIN:
+            # If admin is signing off on behalf, record the sign-off
+            if data.get("engineeringSignoff") and not feature.engineering_signoff:
+                if "signedOffById" not in data:
+                    data["signedOffById"] = user.id
 
         feature = FeatureService.update_feature(feature_id, **data)
         return jsonify(feature.to_dict()), 200

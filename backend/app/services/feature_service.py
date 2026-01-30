@@ -80,6 +80,8 @@ class FeatureService:
             feature.release_date = kwargs["releaseDate"]
         if "assignedEngineerId" in kwargs:
             feature.assigned_engineer_id = kwargs["assignedEngineerId"]
+        if "signedOffById" in kwargs:
+            feature.signed_off_by_id = kwargs["signedOffById"]
 
         db.session.commit()
         return feature

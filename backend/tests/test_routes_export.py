@@ -3,6 +3,7 @@ from io import BytesIO
 from openpyxl import load_workbook
 from pptx import Presentation
 from docx import Document
+from app.models import Category, Feature
 
 
 @pytest.mark.functional
@@ -160,7 +161,3 @@ class TestImportRoutes:
         response = client.post('/api/import/prd/excel')
 
         assert response.status_code == 401
-
-
-# Import necessary models for tests
-from app.models import Category, Feature

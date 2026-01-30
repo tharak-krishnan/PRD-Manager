@@ -560,30 +560,51 @@ class PRDExporter:
 
         doc = Document()
 
+        # Set narrow margins to fit table within page
+        section = doc.sections[0]
+        section.left_margin = Inches(0.5)
+        section.right_margin = Inches(0.5)
+        section.top_margin = Inches(0.75)
+        section.bottom_margin = Inches(0.75)
+
+        # Set document font to Montserrat
+        style = doc.styles['Normal']
+        font = style.font
+        font.name = 'Montserrat'
+        font.size = Pt(11)
+
         # Title
-        title = doc.add_heading("Product Requirements Document (PRD)", 0)
+        title = doc.add_heading("Product Requirements Document", 0)
         title.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        title.runs[0].font.name = 'Montserrat'
+        title.runs[0].font.size = Pt(24)
 
         # Metadata
         metadata = doc.add_paragraph(
-            f'Generated: {datetime.now().strftime("%B %d, %Y at %I:%M %p")}'
+            f'Generated: {datetime.now().strftime("%B %d, %Y")}'
         )
         metadata.alignment = WD_ALIGN_PARAGRAPH.CENTER
         metadata.runs[0].italic = True
+        metadata.runs[0].font.name = 'Montserrat'
+        metadata.runs[0].font.size = Pt(10)
 
         doc.add_paragraph()  # Spacing
 
         # Table of Contents
-        doc.add_heading("Table of Contents", 1)
+        toc_heading = doc.add_heading("Table of Contents", 1)
+        toc_heading.runs[0].font.name = 'Montserrat'
         for idx, category in enumerate(self.categories, start=1):
-            toc_para = doc.add_paragraph(f"{idx}. {category.name}", style="List Number")
+            toc_para = doc.add_paragraph(f"{idx}. {category.name}")
+            toc_para.runs[0].font.name = 'Montserrat'
+            toc_para.runs[0].font.size = Pt(11)
 
         doc.add_page_break()
 
         # Add each category
-        for category in self.categories:
-            self._add_category_to_doc(doc, category)
-            doc.add_page_break()
+        for idx, category in enumerate(self.categories):
+            self._add_category_to_doc(doc, category, idx + 1)
+            if idx < len(self.categories) - 1:  # Don't add page break after last category
+                doc.add_page_break()
 
         # Save to BytesIO buffer
         buffer = BytesIO()
@@ -591,63 +612,121 @@ class PRDExporter:
         buffer.seek(0)
         return buffer
 
-    def _add_category_to_doc(self, doc, category):
-        """Add a category section to the Word document"""
-        from docx.shared import Pt, RGBColor
+    def _add_category_to_doc(self, doc, category, section_number):
+        """Add a category section to the Word document with single table format"""
+        from docx.shared import Pt, RGBColor, Inches
         from docx.enum.text import WD_ALIGN_PARAGRAPH
+        from docx.oxml.ns import qn
+        from docx.oxml import OxmlElement
 
         # Category title
-        heading = doc.add_heading(category.name, 1)
+        heading = doc.add_heading(f"{section_number}. {category.name}", 1)
+        heading.runs[0].font.name = 'Montserrat'
+        heading.runs[0].font.size = Pt(18)
+        heading.runs[0].bold = True
 
-        # Category description
-        if category.description:
-            desc_para = doc.add_paragraph(category.description)
-            desc_para.runs[0].italic = True
-            doc.add_paragraph()  # Spacing
+        # Category description (always add, even if empty)
+        desc_text = category.description if category.description else "No description provided."
+        desc_para = doc.add_paragraph(desc_text)
+        desc_para.runs[0].font.name = 'Montserrat'
+        desc_para.runs[0].font.size = Pt(11)
+        desc_para.runs[0].font.color.rgb = RGBColor(75, 85, 99)  # gray-600
+        doc.add_paragraph()  # Spacing
 
         # Features
         features = category.features
         if not features:
-            doc.add_paragraph("No features in this category.")
+            no_features_para = doc.add_paragraph("No features in this category.")
+            no_features_para.runs[0].font.name = 'Montserrat'
             return
 
-        doc.add_paragraph(f"Total Features: {len(features)}")
-        doc.add_paragraph()  # Spacing
+        # Create a single table with features as rows
+        # Columns: ID, Title, Priority, Description, KPI, Customer
+        num_cols = 6
+        table = doc.add_table(rows=1 + len(features), cols=num_cols)
+        table.style = 'Light Grid Accent 1'
 
-        # Add each feature
-        for feature in features:
-            # Feature title with ID
-            feature_heading = doc.add_heading(f"{feature.id}: {feature.title}", 2)
+        # Set table to autofit
+        table.autofit = False
+        table.allow_autofit = False
 
-            # Create a table for feature details
-            table = doc.add_table(rows=9, cols=2)
-            table.style = "Light Grid Accent 1"
+        # Set column widths (in inches) - optimized for 0.5" margins (7.5" usable width)
+        col_widths = [0.5, 1.5, 0.7, 2.7, 1.1, 0.9]  # Total 7.4 inches
+        for idx, width in enumerate(col_widths):
+            for cell in table.columns[idx].cells:
+                cell.width = Inches(width)
 
-            # Add feature details
-            details = [
-                ("Priority", feature.priority.value),
-                ("Description", feature.description or "-"),
-                ("KPI", feature.kpi or "-"),
-                ("Customer", feature.customer_name or "-"),
-                ("Engineering Comment", feature.engineering_comment or "-"),
-                ("Engineering Signoff", "Yes" if feature.engineering_signoff else "No"),
-                ("Complexity", feature.engineering_complexity.value),
-                (
-                    "Release Date",
-                    (
-                        self._format_release_date(feature.release_date)
-                        if feature.release_date
-                        else "-"
-                    ),
-                ),
+        # Header row
+        headers = ["ID", "Title", "Priority", "Description", "KPI", "Customer"]
+        header_cells = table.rows[0].cells
+        for idx, header_text in enumerate(headers):
+            cell = header_cells[idx]
+            cell.text = header_text
+            # Style header
+            paragraph = cell.paragraphs[0]
+            run = paragraph.runs[0]
+            run.font.bold = True
+            run.font.name = 'Montserrat'
+            run.font.size = Pt(8)
+            run.font.color.rgb = RGBColor(255, 255, 255)
+            run.font.no_proof = True  # Disable spell check and hyphenation
+
+            # Disable word breaking in header
+            paragraph.paragraph_format.widow_control = False
+
+            # Set cell background color (dark blue)
+            shading_elm = OxmlElement('w:shd')
+            shading_elm.set(qn('w:fill'), '366092')
+            cell._element.get_or_add_tcPr().append(shading_elm)
+
+            # Center align header text
+            paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
+
+        # Data rows
+        for row_idx, feature in enumerate(features, start=1):
+            row_cells = table.rows[row_idx].cells
+
+            # Set cell values (only product-focused columns)
+            values = [
+                feature.id,
+                feature.title,
+                feature.priority.value,
+                feature.description or "-",
+                feature.kpi or "-",
+                feature.customer_name or "-",
             ]
 
-            for idx, (label, value) in enumerate(details):
-                table.rows[idx].cells[0].text = label
-                table.rows[idx].cells[0].paragraphs[0].runs[0].bold = True
-                table.rows[idx].cells[1].text = str(value)
+            for col_idx, value in enumerate(values):
+                cell = row_cells[col_idx]
+                cell.text = str(value)
 
-            doc.add_paragraph()  # Spacing between features
+                # Style cell content
+                paragraph = cell.paragraphs[0]
+                run = paragraph.runs[0]
+                run.font.name = 'Montserrat'
+                run.font.size = Pt(8)
+
+                # Disable word breaking/hyphenation
+                paragraph.paragraph_format.widow_control = False
+
+                # Prevent word breaks by setting language to None (disables hyphenation)
+                run.font.no_proof = True
+
+                # Vertical alignment
+                cell.vertical_alignment = 1  # Center vertically
+
+                # Priority column: color code and center
+                if col_idx == 2:  # Priority column
+                    run.font.bold = True
+                    paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                    if value == "High":
+                        run.font.color.rgb = RGBColor(185, 28, 28)  # red-700
+                    elif value == "Medium":
+                        run.font.color.rgb = RGBColor(161, 98, 7)  # yellow-700
+                    elif value == "Low":
+                        run.font.color.rgb = RGBColor(21, 128, 61)  # green-700
+
+        doc.add_paragraph()  # Spacing after table
 
     def _format_release_date(self, date_str):
         """Format YYYY-MM to readable format"""

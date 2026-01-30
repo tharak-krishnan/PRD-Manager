@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useMemo, useCallback } from 'react';
 import { apiClient } from '../services/api';
 
 export type UserRole = 'admin' | 'product_manager' | 'engineer' | 'viewer';
@@ -64,26 +64,26 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, []);
 
-  const login = async (username: string, password: string) => {
+  const login = useCallback(async (username: string, password: string) => {
     const data = await apiClient.login(username, password);
     setUser(data.user);
-  };
+  }, []);
 
-  const logout = () => {
+  const logout = useCallback(() => {
     localStorage.removeItem('access_token');
     setUser(null);
     window.location.href = '/login';
-  };
+  }, []);
 
-  const register = async (username: string, email: string, password: string) => {
+  const register = useCallback(async (username: string, email: string, password: string) => {
     await apiClient.register(username, email, password);
-  };
+  }, []);
 
-  const hasRole = (...roles: UserRole[]): boolean => {
+  const hasRole = useCallback((...roles: UserRole[]): boolean => {
     return user ? roles.includes(user.role) : false;
-  };
+  }, [user]);
 
-  const canEditFeature = (feature: Feature): boolean => {
+  const canEditFeature = useCallback((feature: Feature): boolean => {
     if (!user) return false;
 
     if (user.role === 'admin') return true;
@@ -92,21 +92,21 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       return feature.assignedEngineerId === user.id;
     }
     return false;
-  };
+  }, [user]);
+
+  const value = useMemo(() => ({
+    user,
+    login,
+    logout,
+    register,
+    isAuthenticated: !!user,
+    isLoading,
+    hasRole,
+    canEditFeature,
+  }), [user, login, logout, register, isLoading, hasRole, canEditFeature]);
 
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        login,
-        logout,
-        register,
-        isAuthenticated: !!user,
-        isLoading,
-        hasRole,
-        canEditFeature,
-      }}
-    >
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );

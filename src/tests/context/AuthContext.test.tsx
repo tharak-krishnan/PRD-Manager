@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, act } from '@testing-library/react';
 import { AuthProvider, useAuth } from '../../context/AuthContext';
 import { apiClient } from '../../services/api';
 
@@ -53,7 +53,9 @@ describe('AuthContext', () => {
       </AuthProvider>
     );
 
-    screen.getByText('Login').click();
+    await act(async () => {
+      screen.getByText('Login').click();
+    });
     await waitFor(() => {
       expect(apiClient.login).toHaveBeenCalled();
     });
@@ -69,7 +71,9 @@ describe('AuthContext', () => {
       </AuthProvider>
     );
 
-    screen.getByText('Register').click();
+    await act(async () => {
+      screen.getByText('Register').click();
+    });
     await waitFor(() => {
       expect(apiClient.register).toHaveBeenCalled();
     });
@@ -88,7 +92,9 @@ describe('AuthContext', () => {
 
     await waitFor(() => screen.getByTestId('auth'));
 
-    screen.getByText('Logout').click();
+    await act(async () => {
+      screen.getByText('Logout').click();
+    });
     expect(window.location.href).toBe('/login');
   });
 });

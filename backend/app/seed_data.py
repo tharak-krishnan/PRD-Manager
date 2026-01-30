@@ -37,29 +37,25 @@ def seed_database():
                 username="admin",
                 email="admin@prdmanager.com",
                 password_hash=generate_password_hash("admin123"),
-                role=UserRole.ADMIN,
-                is_active=True
+                role=UserRole.ADMIN
             ),
             User(
                 username="pm",
                 email="pm@prdmanager.com",
                 password_hash=generate_password_hash("pm123"),
-                role=UserRole.PRODUCT_MANAGER,
-                is_active=True
+                role=UserRole.PRODUCT_MANAGER
             ),
             User(
                 username="engineer",
                 email="engineer@prdmanager.com",
                 password_hash=generate_password_hash("engineer123"),
-                role=UserRole.ENGINEER,
-                is_active=True
+                role=UserRole.ENGINEER
             ),
             User(
                 username="viewer",
                 email="viewer@prdmanager.com",
                 password_hash=generate_password_hash("viewer123"),
-                role=UserRole.VIEWER,
-                is_active=True
+                role=UserRole.VIEWER
             ),
         ]
         db.session.add_all(users)
@@ -87,6 +83,8 @@ def seed_database():
             engineering_signoff=True,
             engineering_complexity=TShirtSize.M,
             release_date="2023-06",
+            assigned_engineer_id=3,
+            signed_off_by_id=3,
         ),
         Feature(
             id="1.2",
@@ -100,6 +98,8 @@ def seed_database():
             engineering_signoff=True,
             engineering_complexity=TShirtSize.S,
             release_date="2023-05",
+            assigned_engineer_id=3,
+            signed_off_by_id=3,
         ),
         Feature(
             id="1.3",
@@ -109,23 +109,25 @@ def seed_database():
             description="Add SMS and authenticator app options for 2FA",
             kpi="Improve security metrics by 40%",
             customer_name="Security Team",
-            engineering_comment="Will require integration with SMS provider",
-            engineering_signoff=True,
-            engineering_complexity=TShirtSize.L,
-            release_date="2023-07",
+            engineering_comment=None,
+            engineering_signoff=False,
+            engineering_complexity=TShirtSize.M,
+            release_date="2024-06",
+            assigned_engineer_id=None,
         ),
         Feature(
             id="1.4",
             category_id="1",
             title="Account Lockout Protection",
-            priority=Priority.MEDIUM,
+            priority=Priority.HIGH,
             description="Implement temporary account lockout after failed login attempts",
             kpi="Reduce unauthorized access attempts by 60%",
             customer_name="Security Team",
             engineering_comment="Need to design rate limiting system",
             engineering_signoff=False,
             engineering_complexity=TShirtSize.M,
-            release_date="2023-08",
+            release_date="2024-03",
+            assigned_engineer_id=3,
         ),
         Feature(
             id="1.5",
@@ -138,7 +140,8 @@ def seed_database():
             engineering_comment="Will require database schema changes",
             engineering_signoff=False,
             engineering_complexity=TShirtSize.XL,
-            release_date="2023-09",
+            release_date="2024-04",
+            assigned_engineer_id=3,
         ),
     ]
     db.session.add_all(features_1)
@@ -164,7 +167,8 @@ def seed_database():
             engineering_comment="Will require new database schema",
             engineering_signoff=False,
             engineering_complexity=TShirtSize.L,
-            release_date="2023-08",
+            release_date="2024-02",
+            assigned_engineer_id=3,
         ),
         Feature(
             id="2.2",
@@ -178,6 +182,8 @@ def seed_database():
             engineering_signoff=True,
             engineering_complexity=TShirtSize.L,
             release_date="2023-07",
+            assigned_engineer_id=3,
+            signed_off_by_id=3,
         ),
         Feature(
             id="2.3",
@@ -187,23 +193,25 @@ def seed_database():
             description="Allow users to export reports in multiple formats",
             kpi="Improve sharing capabilities by 30%",
             customer_name="Marketing Team",
-            engineering_comment="Need to research PDF generation libraries",
-            engineering_signoff=True,
+            engineering_comment=None,
+            engineering_signoff=False,
             engineering_complexity=TShirtSize.M,
-            release_date="2023-06",
+            release_date="2024-08",
+            assigned_engineer_id=None,
         ),
         Feature(
             id="2.4",
             category_id="2",
             title="Scheduled Reports",
-            priority=Priority.MEDIUM,
+            priority=Priority.LOW,
             description="Allow users to schedule automated report generation and delivery",
             kpi="Reduce manual reporting time by 70%",
             customer_name="Account Management",
             engineering_comment="Will need to set up cron jobs and email delivery",
             engineering_signoff=False,
             engineering_complexity=TShirtSize.M,
-            release_date="2023-10",
+            release_date="2024-05",
+            assigned_engineer_id=3,
         ),
     ]
     db.session.add_all(features_2)
@@ -230,6 +238,8 @@ def seed_database():
             engineering_signoff=True,
             engineering_complexity=TShirtSize.XL,
             release_date="2023-09",
+            assigned_engineer_id=3,
+            signed_off_by_id=3,
         ),
         Feature(
             id="3.2",
@@ -243,6 +253,8 @@ def seed_database():
             engineering_signoff=True,
             engineering_complexity=TShirtSize.M,
             release_date="2023-06",
+            assigned_engineer_id=3,
+            signed_off_by_id=3,
         ),
         Feature(
             id="3.3",
@@ -255,7 +267,8 @@ def seed_database():
             engineering_comment="Need to use native device APIs",
             engineering_signoff=False,
             engineering_complexity=TShirtSize.L,
-            release_date="2023-08",
+            release_date="2024-08",
+            assigned_engineer_id=3,
         ),
         Feature(
             id="3.4",
@@ -265,10 +278,11 @@ def seed_database():
             description="Implement augmented reality features for product visualization",
             kpi="Increase product interaction by 15%",
             customer_name="Innovation Team",
-            engineering_comment="Experimental feature, will need ARKit/ARCore",
+            engineering_comment=None,
             engineering_signoff=False,
-            engineering_complexity=TShirtSize.XL,
-            release_date="2023-11",
+            engineering_complexity=TShirtSize.M,
+            release_date="2024-11",
+            assigned_engineer_id=None,
         ),
     ]
     db.session.add_all(features_3)
@@ -295,6 +309,8 @@ def seed_database():
             engineering_signoff=True,
             engineering_complexity=TShirtSize.L,
             release_date="2023-07",
+            assigned_engineer_id=3,
+            signed_off_by_id=3,
         ),
         Feature(
             id="4.2",
@@ -308,6 +324,8 @@ def seed_database():
             engineering_signoff=True,
             engineering_complexity=TShirtSize.M,
             release_date="2023-08",
+            assigned_engineer_id=3,
+            signed_off_by_id=3,
         ),
         Feature(
             id="4.3",
@@ -320,7 +338,8 @@ def seed_database():
             engineering_comment="Will need PDF generation capability",
             engineering_signoff=False,
             engineering_complexity=TShirtSize.S,
-            release_date="2023-09",
+            release_date="2024-09",
+            assigned_engineer_id=3,
         ),
     ]
     db.session.add_all(features_4)
@@ -347,6 +366,8 @@ def seed_database():
             engineering_signoff=True,
             engineering_complexity=TShirtSize.M,
             release_date="2023-06",
+            assigned_engineer_id=3,
+            signed_off_by_id=3,
         ),
         Feature(
             id="5.2",
@@ -360,6 +381,8 @@ def seed_database():
             engineering_signoff=True,
             engineering_complexity=TShirtSize.L,
             release_date="2023-07",
+            assigned_engineer_id=3,
+            signed_off_by_id=3,
         ),
         Feature(
             id="5.3",
@@ -369,10 +392,11 @@ def seed_database():
             description="Implement content delivery network for static assets",
             kpi="Improve global load times by 50%",
             customer_name="International Sales",
-            engineering_comment="Will use CloudFront or similar",
+            engineering_comment=None,
             engineering_signoff=False,
             engineering_complexity=TShirtSize.M,
-            release_date="2023-10",
+            release_date="2024-10",
+            assigned_engineer_id=None,
         ),
     ]
     db.session.add_all(features_5)
@@ -399,6 +423,8 @@ def seed_database():
             engineering_signoff=True,
             engineering_complexity=TShirtSize.XL,
             release_date="2023-08",
+            assigned_engineer_id=3,
+            signed_off_by_id=3,
         ),
         Feature(
             id="6.2",
@@ -411,7 +437,8 @@ def seed_database():
             engineering_comment="Will use WebSockets for real-time updates",
             engineering_signoff=False,
             engineering_complexity=TShirtSize.L,
-            release_date="2023-09",
+            release_date="2024-09",
+            assigned_engineer_id=3,
         ),
         Feature(
             id="6.3",
@@ -421,10 +448,11 @@ def seed_database():
             description="Allow multiple users to edit documents simultaneously",
             kpi="Improve document completion time by 50%",
             customer_name="Content Team",
-            engineering_comment="Will need operational transformation algorithm",
+            engineering_comment=None,
             engineering_signoff=False,
-            engineering_complexity=TShirtSize.XL,
-            release_date="2023-11",
+            engineering_complexity=TShirtSize.M,
+            release_date="2024-11",
+            assigned_engineer_id=None,
         ),
         Feature(
             id="6.4",
@@ -438,6 +466,8 @@ def seed_database():
             engineering_signoff=True,
             engineering_complexity=TShirtSize.M,
             release_date="2023-07",
+            assigned_engineer_id=3,
+            signed_off_by_id=3,
         ),
     ]
     db.session.add_all(features_6)

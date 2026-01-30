@@ -7,9 +7,9 @@ from app.seed_data import seed_database
 class TestSeedData:
     """Test that seed data is created correctly"""
 
-    def test_seed_creates_default_project(self, app):
+    def test_seed_creates_default_project(self, seeded_app):
         """Test that seeding creates the default project"""
-        with app.app_context():
+        with seeded_app.app_context():
             seed_database()
 
             # Verify default project exists
@@ -18,9 +18,9 @@ class TestSeedData:
             assert project.id == 1
             assert project.description == "Initial project for PRD management"
 
-    def test_seed_creates_categories(self, app):
+    def test_seed_creates_categories(self, seeded_app):
         """Test that seeding creates the expected categories"""
-        with app.app_context():
+        with seeded_app.app_context():
             seed_database()
 
             # Verify categories exist
@@ -43,9 +43,9 @@ class TestSeedData:
             for category in categories:
                 assert category.project_id == 1
 
-    def test_seed_creates_features(self, app):
+    def test_seed_creates_features(self, seeded_app):
         """Test that seeding creates the expected features"""
-        with app.app_context():
+        with seeded_app.app_context():
             seed_database()
 
             # Verify features exist
@@ -59,17 +59,13 @@ class TestSeedData:
             assert feature.description is not None
             assert feature.category_id is not None
 
-    def test_seed_creates_users(self, app):
+    def test_seed_creates_users(self, seeded_app):
         """Test that seeding creates default users"""
-        with app.app_context():
-            # Users should be created during initial setup
+        with seeded_app.app_context():
+            seed_database()
+
+            # Users should be created during seeding
             users = User.query.all()
-
-            # If no users exist, seed should create them
-            if len(users) == 0:
-                seed_database()
-                users = User.query.all()
-
             assert len(users) >= 4
 
             # Verify all roles are present
@@ -89,9 +85,9 @@ class TestSeedData:
             assert pm is not None
             assert pm.role == UserRole.PRODUCT_MANAGER
 
-    def test_seed_is_idempotent(self, app):
+    def test_seed_is_idempotent(self, seeded_app):
         """Test that running seed multiple times doesn't create duplicates"""
-        with app.app_context():
+        with seeded_app.app_context():
             # Seed once
             seed_database()
             first_project_count = Project.query.count()
@@ -109,9 +105,9 @@ class TestSeedData:
             assert first_category_count == second_category_count
             assert first_feature_count == second_feature_count
 
-    def test_seed_maintains_referential_integrity(self, app):
+    def test_seed_maintains_referential_integrity(self, seeded_app):
         """Test that seeded data maintains proper relationships"""
-        with app.app_context():
+        with seeded_app.app_context():
             seed_database()
 
             # Get default project
@@ -155,9 +151,9 @@ class TestSeedData:
 class TestDataIntegrity:
     """Tests for data integrity after seeding"""
 
-    def test_all_features_have_valid_priorities(self, app):
+    def test_all_features_have_valid_priorities(self, seeded_app):
         """Test that all seeded features have valid priority values"""
-        with app.app_context():
+        with seeded_app.app_context():
             seed_database()
 
             features = Feature.query.all()
@@ -166,9 +162,9 @@ class TestDataIntegrity:
             for feature in features:
                 assert feature.priority in valid_priorities
 
-    def test_all_features_have_valid_complexity(self, app):
+    def test_all_features_have_valid_complexity(self, seeded_app):
         """Test that all seeded features have valid complexity values"""
-        with app.app_context():
+        with seeded_app.app_context():
             seed_database()
 
             features = Feature.query.all()
@@ -177,9 +173,9 @@ class TestDataIntegrity:
             for feature in features:
                 assert feature.engineering_complexity in valid_complexities
 
-    def test_all_categories_belong_to_existing_project(self, app):
+    def test_all_categories_belong_to_existing_project(self, seeded_app):
         """Test that all categories reference an existing project"""
-        with app.app_context():
+        with seeded_app.app_context():
             seed_database()
 
             categories = Category.query.all()
@@ -188,9 +184,9 @@ class TestDataIntegrity:
             for category in categories:
                 assert category.project_id in project_ids
 
-    def test_all_features_belong_to_existing_category(self, app):
+    def test_all_features_belong_to_existing_category(self, seeded_app):
         """Test that all features reference an existing category"""
-        with app.app_context():
+        with seeded_app.app_context():
             seed_database()
 
             features = Feature.query.all()
@@ -199,9 +195,9 @@ class TestDataIntegrity:
             for feature in features:
                 assert feature.category_id in category_ids
 
-    def test_user_passwords_are_hashed(self, app):
+    def test_user_passwords_are_hashed(self, seeded_app):
         """Test that user passwords are properly hashed"""
-        with app.app_context():
+        with seeded_app.app_context():
             seed_database()
 
             users = User.query.all()
@@ -217,17 +213,17 @@ class TestDataIntegrity:
 class TestDataAvailability:
     """Tests to ensure data is available to the API"""
 
-    def test_data_available_after_seed(self, client):
+    def test_data_available_after_seed(self, seeded_client):
         """Test that seeded data is accessible via API endpoints"""
         # Login first
-        response = client.post(
+        response = seeded_client.post(
             "/api/auth/login", json={"username": "admin", "password": "admin123"}
         )
         assert response.status_code == 200
         token = response.json["access_token"]
 
         # Get projects
-        response = client.get(
+        response = seeded_client.get(
             "/api/projects", headers={"Authorization": f"Bearer {token}"}
         )
         assert response.status_code == 200
@@ -236,7 +232,7 @@ class TestDataAvailability:
 
         # Get categories for first project
         project_id = projects[0]["id"]
-        response = client.get(
+        response = seeded_client.get(
             f"/api/categories?project_id={project_id}",
             headers={"Authorization": f"Bearer {token}"},
         )
@@ -244,7 +240,7 @@ class TestDataAvailability:
         categories = response.json
         assert len(categories) >= 1
 
-    def test_login_with_all_seeded_users(self, client):
+    def test_login_with_all_seeded_users(self, seeded_client):
         """Test that all seeded users can log in successfully"""
         test_credentials = [
             ("admin", "admin123"),
@@ -254,7 +250,7 @@ class TestDataAvailability:
         ]
 
         for username, password in test_credentials:
-            response = client.post(
+            response = seeded_client.post(
                 "/api/auth/login", json={"username": username, "password": password}
             )
             assert response.status_code == 200, f"Login failed for {username}"

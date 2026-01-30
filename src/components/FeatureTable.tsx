@@ -3,11 +3,11 @@ import { useData, Feature, Priority, TShirtSize } from '../context/DataContext';
 import { useAuth } from '../context/AuthContext';
 import { PlusIcon, Trash2Icon, CheckIcon, XIcon, EditIcon } from 'lucide-react';
 import Pagination from './Pagination';
+import FeatureEditModal from './FeatureEditModal';
 import { apiClient } from '../services/api';
 import {
   canCreateFeature,
   canDeleteFeature,
-  canEditFeatureField,
   canAssignEngineer,
 } from '../utils/permissions';
 
@@ -25,23 +25,12 @@ const FeatureTable: React.FC<FeatureTableProps> = ({ categoryId }) => {
   const { categories, addFeature, updateFeature, deleteFeature } = useData();
   const { user, canEditFeature } = useAuth();
   const category = categories.find((c) => c.id === categoryId);
-  const [isAddingFeature, setIsAddingFeature] = useState(false);
-  const [editingFeatureId, setEditingFeatureId] = useState<string | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingFeature, setEditingFeature] = useState<Feature | null>(null);
+  const [isNewFeature, setIsNewFeature] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
   const [engineers, setEngineers] = useState<Engineer[]>([]);
-  const [newFeature, setNewFeature] = useState<Omit<Feature, 'id'>>({
-    title: '',
-    priority: 'Medium',
-    description: '',
-    kpi: '',
-    customerName: '',
-    engineeringComment: '',
-    engineeringSignoff: false,
-    engineeringComplexity: 'M',
-    releaseDate: '',
-    assignedEngineerId: undefined,
-  });
 
   // Load engineers for assignment dropdown (Admin/PM only)
   useEffect(() => {
@@ -69,67 +58,31 @@ const FeatureTable: React.FC<FeatureTableProps> = ({ categoryId }) => {
     setCurrentPage(page);
   };
 
-  const handleAddFeature = () => {
-    if (newFeature.title.trim()) {
-      addFeature(categoryId, newFeature);
-      setNewFeature({
-        title: '',
-        priority: 'Medium',
-        description: '',
-        kpi: '',
-        customerName: '',
-        engineeringComment: '',
-        engineeringSignoff: false,
-        engineeringComplexity: 'M',
-        releaseDate: '',
-        assignedEngineerId: undefined,
-      });
-      setIsAddingFeature(false);
-    }
+  const handleOpenAddModal = () => {
+    setEditingFeature(null);
+    setIsNewFeature(true);
+    setIsModalOpen(true);
   };
 
-  const handleEditFeature = (feature: Feature) => {
+  const handleOpenEditModal = (feature: Feature) => {
     if (!canEditFeature(feature)) return;
-
-    setEditingFeatureId(feature.id);
-    setNewFeature({
-      title: feature.title,
-      priority: feature.priority,
-      description: feature.description,
-      kpi: feature.kpi,
-      customerName: feature.customerName,
-      engineeringComment: feature.engineeringComment,
-      engineeringSignoff: feature.engineeringSignoff,
-      engineeringComplexity: feature.engineeringComplexity,
-      releaseDate: feature.releaseDate,
-      assignedEngineerId: feature.assignedEngineerId,
-    });
+    setEditingFeature(feature);
+    setIsNewFeature(false);
+    setIsModalOpen(true);
   };
 
-  const handleUpdateFeature = () => {
-    if (editingFeatureId && newFeature.title.trim()) {
-      updateFeature(categoryId, editingFeatureId, newFeature);
-      setEditingFeatureId(null);
-      setNewFeature({
-        title: '',
-        priority: 'Medium',
-        description: '',
-        kpi: '',
-        customerName: '',
-        engineeringComment: '',
-        engineeringSignoff: false,
-        engineeringComplexity: 'M',
-        releaseDate: '',
-        assignedEngineerId: undefined,
-      });
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setEditingFeature(null);
+    setIsNewFeature(false);
+  };
+
+  const handleSaveFeature = (featureData: Omit<Feature, 'id'>) => {
+    if (isNewFeature) {
+      addFeature(categoryId, featureData);
+    } else if (editingFeature) {
+      updateFeature(categoryId, editingFeature.id, featureData);
     }
-  };
-
-  const isFieldDisabled = (fieldName: string): boolean => {
-    if (!editingFeatureId) return false;
-    const feature = category.features.find((f) => f.id === editingFeatureId);
-    if (!feature) return false;
-    return !canEditFeatureField(user.role, fieldName, feature, user.id);
   };
 
   const priorityColorMap: Record<Priority, string> = {
@@ -160,206 +113,6 @@ const FeatureTable: React.FC<FeatureTableProps> = ({ categoryId }) => {
     );
   };
 
-  const getFieldClassName = (fieldName: string, baseClass: string): string => {
-    const disabled = isFieldDisabled(fieldName);
-    return `${baseClass} ${
-      disabled
-        ? 'bg-gray-700/50 cursor-not-allowed opacity-50'
-        : 'bg-gray-700 focus:ring-2 focus:ring-blue-500'
-    }`;
-  };
-
-  const FeatureForm = () => (
-    <tr className="bg-gray-800/60">
-      <td className="px-4 py-2 border-b border-gray-700 text-gray-400">
-        {editingFeatureId || 'New'}
-      </td>
-      <td className="px-4 py-2 border-b border-gray-700">
-        <input
-          type="text"
-          value={newFeature.title}
-          onChange={(e) => setNewFeature({ ...newFeature, title: e.target.value })}
-          disabled={isFieldDisabled('title')}
-          placeholder="Feature title"
-          className={getFieldClassName(
-            'title',
-            'w-full px-2 py-1 border border-gray-600 rounded text-gray-100 placeholder-gray-400 focus:outline-none focus:border-transparent'
-          )}
-        />
-      </td>
-      <td className="px-4 py-2 border-b border-gray-700">
-        <select
-          value={newFeature.priority}
-          onChange={(e) => setNewFeature({ ...newFeature, priority: e.target.value as Priority })}
-          disabled={isFieldDisabled('priority')}
-          className={getFieldClassName(
-            'priority',
-            'w-full px-2 py-1 border border-gray-600 rounded text-gray-100 focus:outline-none focus:border-transparent'
-          )}
-        >
-          <option value="High">High</option>
-          <option value="Medium">Medium</option>
-          <option value="Low">Low</option>
-        </select>
-      </td>
-      <td className="px-4 py-2 border-b border-gray-700">
-        <textarea
-          value={newFeature.description}
-          onChange={(e) => setNewFeature({ ...newFeature, description: e.target.value })}
-          disabled={isFieldDisabled('description')}
-          placeholder="Description"
-          className={getFieldClassName(
-            'description',
-            'w-full px-2 py-1 border border-gray-600 rounded text-gray-100 placeholder-gray-400 focus:outline-none focus:border-transparent'
-          )}
-          rows={2}
-        />
-      </td>
-      <td className="px-4 py-2 border-b border-gray-700">
-        <input
-          type="text"
-          value={newFeature.kpi}
-          onChange={(e) => setNewFeature({ ...newFeature, kpi: e.target.value })}
-          disabled={isFieldDisabled('kpi')}
-          placeholder="KPI"
-          className={getFieldClassName(
-            'kpi',
-            'w-full px-2 py-1 border border-gray-600 rounded text-gray-100 placeholder-gray-400 focus:outline-none focus:border-transparent'
-          )}
-        />
-      </td>
-      <td className="px-4 py-2 border-b border-gray-700">
-        <input
-          type="text"
-          value={newFeature.customerName}
-          onChange={(e) => setNewFeature({ ...newFeature, customerName: e.target.value })}
-          disabled={isFieldDisabled('customerName')}
-          placeholder="Customer name"
-          className={getFieldClassName(
-            'customerName',
-            'w-full px-2 py-1 border border-gray-600 rounded text-gray-100 placeholder-gray-400 focus:outline-none focus:border-transparent'
-          )}
-        />
-      </td>
-      <td className="px-4 py-2 border-b border-gray-700">
-        <textarea
-          value={newFeature.engineeringComment}
-          onChange={(e) => setNewFeature({ ...newFeature, engineeringComment: e.target.value })}
-          disabled={isFieldDisabled('engineeringComment')}
-          placeholder="Engineering comment"
-          className={getFieldClassName(
-            'engineeringComment',
-            'w-full px-2 py-1 border border-gray-600 rounded text-gray-100 placeholder-gray-400 focus:outline-none focus:border-transparent'
-          )}
-          rows={2}
-        />
-      </td>
-      <td className="px-4 py-2 border-b border-gray-700">
-        <div className="flex justify-center">
-          <input
-            type="checkbox"
-            checked={newFeature.engineeringSignoff}
-            onChange={(e) =>
-              setNewFeature({ ...newFeature, engineeringSignoff: e.target.checked })
-            }
-            disabled={isFieldDisabled('engineeringSignoff')}
-            className={`h-4 w-4 rounded border-gray-600 text-blue-600 ${
-              isFieldDisabled('engineeringSignoff')
-                ? 'cursor-not-allowed opacity-50'
-                : 'focus:ring-blue-500'
-            } bg-gray-700`}
-          />
-        </div>
-      </td>
-      <td className="px-4 py-2 border-b border-gray-700">
-        <select
-          value={newFeature.engineeringComplexity}
-          onChange={(e) =>
-            setNewFeature({ ...newFeature, engineeringComplexity: e.target.value as TShirtSize })
-          }
-          disabled={isFieldDisabled('engineeringComplexity')}
-          className={getFieldClassName(
-            'engineeringComplexity',
-            'w-full px-2 py-1 border border-gray-600 rounded text-gray-100 focus:outline-none focus:border-transparent'
-          )}
-        >
-          <option value="XS">XS</option>
-          <option value="S">S</option>
-          <option value="M">M</option>
-          <option value="L">L</option>
-          <option value="XL">XL</option>
-        </select>
-      </td>
-      <td className="px-4 py-2 border-b border-gray-700">
-        <input
-          type="month"
-          value={newFeature.releaseDate}
-          onChange={(e) => setNewFeature({ ...newFeature, releaseDate: e.target.value })}
-          disabled={isFieldDisabled('releaseDate')}
-          className={getFieldClassName(
-            'releaseDate',
-            'w-full px-2 py-1 border border-gray-600 rounded text-gray-100 focus:outline-none focus:border-transparent'
-          )}
-        />
-      </td>
-      {canAssignEngineer(user.role) && (
-        <td className="px-4 py-2 border-b border-gray-700">
-          <select
-            value={newFeature.assignedEngineerId || ''}
-            onChange={(e) =>
-              setNewFeature({
-                ...newFeature,
-                assignedEngineerId: e.target.value ? Number(e.target.value) : undefined,
-              })
-            }
-            className="w-full px-2 py-1 bg-gray-700 border border-gray-600 rounded text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          >
-            <option value="">Unassigned</option>
-            {engineers.map((eng) => (
-              <option key={eng.id} value={eng.id}>
-                {eng.username}
-              </option>
-            ))}
-          </select>
-        </td>
-      )}
-      <td className="px-4 py-2 border-b border-gray-700">
-        <div className="flex space-x-1 justify-center">
-          {editingFeatureId ? (
-            <>
-              <button
-                onClick={handleUpdateFeature}
-                className="p-1 text-green-400 hover:text-green-300 transition-colors"
-              >
-                <CheckIcon size={16} />
-              </button>
-              <button
-                onClick={() => setEditingFeatureId(null)}
-                className="p-1 text-red-400 hover:text-red-300 transition-colors"
-              >
-                <XIcon size={16} />
-              </button>
-            </>
-          ) : (
-            <>
-              <button
-                onClick={handleAddFeature}
-                className="p-1 text-green-400 hover:text-green-300 transition-colors"
-              >
-                <CheckIcon size={16} />
-              </button>
-              <button
-                onClick={() => setIsAddingFeature(false)}
-                className="p-1 text-red-400 hover:text-red-300 transition-colors"
-              >
-                <XIcon size={16} />
-              </button>
-            </>
-          )}
-        </div>
-      </td>
-    </tr>
-  );
 
   return (
     <div className="w-full">
@@ -367,9 +120,8 @@ const FeatureTable: React.FC<FeatureTableProps> = ({ categoryId }) => {
         <h2 className="text-lg font-semibold text-gray-100">{category.name}</h2>
         {canCreateFeature(user.role) && (
           <button
-            onClick={() => setIsAddingFeature(true)}
-            className="px-3 py-1.5 bg-blue-600 text-white rounded-md flex items-center hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            disabled={isAddingFeature || !!editingFeatureId}
+            onClick={handleOpenAddModal}
+            className="px-3 py-1.5 bg-blue-600 text-white rounded-md flex items-center hover:bg-blue-700 transition-colors"
           >
             <PlusIcon size={16} className="mr-1.5" />
             Add Feature
@@ -402,11 +154,7 @@ const FeatureTable: React.FC<FeatureTableProps> = ({ categoryId }) => {
             </tr>
           </thead>
           <tbody className="bg-gray-800 divide-y divide-gray-700">
-            {isAddingFeature && <FeatureForm />}
-            {paginatedFeatures.map((feature) =>
-              editingFeatureId === feature.id ? (
-                <FeatureForm key={feature.id} />
-              ) : (
+            {paginatedFeatures.map((feature) => (
                 <React.Fragment key={feature.id}>
                   {/* Row 1: Main Info */}
                   <tr className="hover:bg-gray-750">
@@ -439,9 +187,9 @@ const FeatureTable: React.FC<FeatureTableProps> = ({ categoryId }) => {
                       <div className="flex justify-center space-x-1">
                         {canEditFeature(feature) && (
                           <button
-                            onClick={() => handleEditFeature(feature)}
-                            className="p-1 text-blue-400 hover:text-blue-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                            disabled={!!editingFeatureId || isAddingFeature}
+                            onClick={() => handleOpenEditModal(feature)}
+                            className="p-1 text-blue-400 hover:text-blue-300 transition-colors"
+                            title="Edit feature"
                           >
                             <EditIcon size={16} />
                           </button>
@@ -449,8 +197,8 @@ const FeatureTable: React.FC<FeatureTableProps> = ({ categoryId }) => {
                         {canDeleteFeature(user.role) && (
                           <button
                             onClick={() => deleteFeature(categoryId, feature.id)}
-                            className="p-1 text-red-400 hover:text-red-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                            disabled={!!editingFeatureId || isAddingFeature}
+                            className="p-1 text-red-400 hover:text-red-300 transition-colors"
+                            title="Delete feature"
                           >
                             <Trash2Icon size={16} />
                           </button>
@@ -520,25 +268,27 @@ const FeatureTable: React.FC<FeatureTableProps> = ({ categoryId }) => {
                               {feature.engineeringComplexity}
                             </span>
                           </div>
-                          {feature.assignedEngineerId && (
-                            <div>
-                              <span className="text-gray-500 uppercase text-[10px] block mb-1">
-                                Assigned
-                              </span>
+                          <div>
+                            <span className="text-gray-500 uppercase text-[10px] block mb-1">
+                              Engineer
+                            </span>
+                            {feature.assignedEngineerId ? (
                               <span className="text-blue-400 text-xs">
-                                {engineers.find((e) => e.id === feature.assignedEngineerId)
-                                  ?.username || `User #${feature.assignedEngineerId}`}
+                                {feature.assignedEngineerName || `User #${feature.assignedEngineerId}`}
                               </span>
-                            </div>
-                          )}
+                            ) : (
+                              <span className="text-gray-500 text-xs italic">
+                                Unassigned
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </td>
                   </tr>
                 </React.Fragment>
-              )
-            )}
-            {totalFeatures === 0 && !isAddingFeature && (
+            ))}
+            {totalFeatures === 0 && (
               <tr>
                 <td colSpan={5} className="px-4 py-8 text-center text-gray-500">
                   No features yet. Click &quot;Add Feature&quot; to create one.
@@ -557,6 +307,16 @@ const FeatureTable: React.FC<FeatureTableProps> = ({ categoryId }) => {
           totalItems={totalFeatures}
         />
       )}
+
+      <FeatureEditModal
+        feature={editingFeature}
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        onSave={handleSaveFeature}
+        userRole={user.role}
+        userId={user.id}
+        isNewFeature={isNewFeature}
+      />
     </div>
   );
 };

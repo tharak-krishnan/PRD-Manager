@@ -129,8 +129,8 @@ class TestPRDExporter:
         # Check category sheet has correct headers
         category_sheet = wb[category.name]
         expected_headers = ['ID', 'Title', 'Priority', 'Description', 'KPI',
-                           'Customer', 'Eng. Comment',
-                           'Signoff', 'Complexity', 'Release Date']
+                            'Customer', 'Eng. Comment',
+                            'Signoff', 'Complexity', 'Release Date']
 
         for col, expected_header in enumerate(expected_headers, start=1):
             assert category_sheet.cell(4, col).value == expected_header

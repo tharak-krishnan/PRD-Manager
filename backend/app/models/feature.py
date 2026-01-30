@@ -50,6 +50,12 @@ class Feature(db.Model):
         nullable=True,
         index=True,
     )
+    signed_off_by_id = db.Column(
+        db.Integer,
+        db.ForeignKey("users.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(
         db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
@@ -69,6 +75,9 @@ class Feature(db.Model):
             "engineeringComplexity": self.engineering_complexity.value,
             "releaseDate": self.release_date,
             "assignedEngineerId": self.assigned_engineer_id,
+            "assignedEngineerName": self.assigned_engineer.username if self.assigned_engineer else None,
+            "signedOffById": self.signed_off_by_id,
+            "signedOffByName": self.signed_off_by.username if self.signed_off_by else None,
         }
 
     def __repr__(self):

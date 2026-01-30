@@ -10,13 +10,13 @@ const Roadmap: React.FC = () => {
   const [exportError, setExportError] = useState<string | null>(null);
   // Generate a color for each category
   const categoryColors = useMemo(() => {
-    const colors = ['bg-blue-900/30 border-blue-700/50 text-blue-400', 'bg-green-900/30 border-green-700/50 text-green-400', 'bg-purple-900/30 border-purple-700/50 text-purple-400', 'bg-yellow-900/30 border-yellow-700/50 text-yellow-400', 'bg-pink-900/30 border-pink-700/50 text-pink-400', 'bg-indigo-900/30 border-indigo-700/50 text-indigo-400', 'bg-red-900/30 border-red-700/50 text-red-400', 'bg-orange-900/30 border-orange-700/50 text-orange-400', 'bg-teal-900/30 border-teal-700/50 text-teal-400', 'bg-cyan-900/30 border-cyan-700/50 text-cyan-400'];
+    const colors = ['bg-blue-900/50 border-blue-700/50 text-blue-300', 'bg-green-900/50 border-green-700/50 text-green-300', 'bg-purple-900/50 border-purple-700/50 text-purple-300', 'bg-yellow-900/50 border-yellow-700/50 text-yellow-300', 'bg-pink-900/50 border-pink-700/50 text-pink-300', 'bg-indigo-900/50 border-indigo-700/50 text-indigo-300', 'bg-red-900/50 border-red-700/50 text-red-300', 'bg-orange-900/50 border-orange-700/50 text-orange-300', 'bg-teal-900/50 border-teal-700/50 text-teal-300', 'bg-cyan-900/50 border-cyan-700/50 text-cyan-300'];
     return categories.reduce((acc, category, index) => {
       acc[category.id] = colors[index % colors.length];
       return acc;
     }, {} as Record<string, string>);
   }, [categories]);
-  // Get all features with release dates
+  // Get all features with release dates (both signed off and pending)
   const featuresWithDates = useMemo(() => {
     return categories.flatMap(category => category.features.filter(feature => feature.releaseDate).map(feature => ({
       ...feature,
@@ -96,8 +96,7 @@ const Roadmap: React.FC = () => {
     return <div className="w-full p-8 text-center bg-gray-800 rounded-lg shadow-lg border border-gray-700">
         <h2 className="text-xl font-semibold mb-4 text-gray-100">Roadmap</h2>
         <p className="text-gray-400">
-          No features with release dates available. Add features with release
-          dates to see the roadmap.
+          No features with release dates available. Add features with release dates to see the roadmap.
         </p>
       </div>;
   }
@@ -124,17 +123,36 @@ const Roadmap: React.FC = () => {
       <h2 className="text-xl font-semibold text-gray-100 mb-4">
         Product Roadmap
       </h2>
+
+      {/* Legend */}
       <div className="mb-6">
-        <div className="flex flex-wrap gap-3 mb-4">
-          {categories.map(category => {
-          const hasFeatures = featuresWithDates.some(f => f.categoryId === category.id);
-          if (!hasFeatures) return null;
-          const colorClass = categoryColors[category.id].split(' ')[0];
-          return <div key={category.id} className="flex items-center" title={category.name}>
-                <div className={`w-4 h-4 rounded mr-2 flex-shrink-0 ${colorClass}`}></div>
-                <span className="text-sm text-gray-300">{category.name}</span>
-              </div>;
-        })}
+        <div className="flex flex-wrap gap-6 mb-4 pb-4 border-b border-gray-700">
+          {/* Category Legend */}
+          <div className="flex flex-wrap gap-3">
+            {categories.map(category => {
+              const hasFeatures = featuresWithDates.some(f => f.categoryId === category.id);
+              if (!hasFeatures) return null;
+              const colorClass = categoryColors[category.id].split(' ')[0];
+              return <div key={category.id} className="flex items-center" title={category.name}>
+                    <div className={`w-4 h-4 rounded mr-2 flex-shrink-0 ${colorClass}`}></div>
+                    <span className="text-sm text-gray-300">{category.name}</span>
+                  </div>;
+            })}
+          </div>
+
+          {/* Status Legend */}
+          <div className="flex gap-4 ml-auto">
+            <div className="flex items-center gap-2">
+              <div className="w-12 h-6 border border-gray-500 rounded bg-gray-800/50"></div>
+              <span className="text-xs text-gray-400">Signed Off</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-12 h-6 border-2 border-dashed border-gray-500 rounded bg-gray-800/50 flex items-center justify-center">
+                <span className="text-xs">⏳</span>
+              </div>
+              <span className="text-xs text-gray-400">Pending Estimation</span>
+            </div>
+          </div>
         </div>
       </div>
       <div className="relative border border-gray-700 rounded-lg bg-gray-800 p-5 min-h-[400px] shadow-lg">
@@ -170,14 +188,19 @@ const Roadmap: React.FC = () => {
                   {months.map(month => {
                 const featuresInMonth = featuresByMonth[month]?.filter(f => f.categoryId === category.id) || [];
                 return <div key={month} className="flex-1 px-1">
-                        {featuresInMonth.map(feature => <div key={feature.id} className={`mb-2 p-2 rounded border text-xs ${categoryColors[category.id]}`} title={`${feature.title} (${feature.id})`}>
-                            <div className="font-medium truncate">
-                              {feature.title}
-                            </div>
-                            <div className="text-xs opacity-75">
-                              {feature.id}
-                            </div>
-                          </div>)}
+                        {featuresInMonth.map(feature => {
+                      // Use dotted border for features without engineering signoff
+                      const borderStyle = feature.engineeringSignoff ? 'border' : 'border-dashed border-2';
+                      const titlePrefix = feature.engineeringSignoff ? '' : '⏳ ';
+                      return <div key={feature.id} className={`mb-2 p-2 rounded ${borderStyle} text-xs ${categoryColors[category.id]}`} title={`${feature.engineeringSignoff ? 'Signed Off' : 'Pending Estimation'}: ${feature.title} (${feature.id})`}>
+                              <div className="font-medium truncate">
+                                {titlePrefix}{feature.title}
+                              </div>
+                              <div className="text-xs opacity-75">
+                                {feature.id}
+                              </div>
+                            </div>;
+                    })}
                       </div>;
               })}
                 </div>
