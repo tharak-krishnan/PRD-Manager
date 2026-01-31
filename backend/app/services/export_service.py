@@ -65,10 +65,10 @@ class RoadmapExporter:
 
     def generate_pptx(self):
         """Generate PowerPoint presentation and return as BytesIO buffer"""
-        # Create presentation with 16:9 widescreen
+        # Create presentation with 16:9 widescreen (50% larger)
         prs = Presentation()
-        prs.slide_width = Inches(13.33)
-        prs.slide_height = Inches(7.5)
+        prs.slide_width = Inches(20)
+        prs.slide_height = Inches(11.25)
 
         # Get features with dates
         features_with_dates = self._get_features_with_dates()
@@ -76,17 +76,17 @@ class RoadmapExporter:
         if not features_with_dates:
             raise ValueError("No features with release dates found")
 
-        # Generate month range
-        months = self._generate_month_range(features_with_dates)
+        # Generate quarter range (changed from monthly to quarterly)
+        quarters = self._generate_quarter_range(features_with_dates)
 
         # Create title slide
-        self._create_title_slide(prs, months)
+        self._create_title_slide(prs, quarters)
 
-        # Split timeline into 6-month chunks and create slides
-        chunks = list(self._chunk_timeline(months, chunk_size=6))
-        for i, months_chunk in enumerate(chunks):
+        # Split timeline into 4-quarter chunks and create slides
+        chunks = list(self._chunk_timeline(quarters, chunk_size=4))
+        for i, quarters_chunk in enumerate(chunks):
             self._create_timeline_slide(
-                prs, months_chunk, i, len(chunks), features_with_dates
+                prs, quarters_chunk, i, len(chunks), features_with_dates
             )
 
         # Save to BytesIO buffer
@@ -95,10 +95,12 @@ class RoadmapExporter:
         buffer.seek(0)
         return buffer
 
-    def _create_title_slide(self, prs, months):
+    def _create_title_slide(self, prs, quarters):
         """Create title slide with metadata"""
-        # Use title slide layout
-        slide = prs.slides.add_slide(prs.slide_layouts[0])
+        from pptx.enum.dml import MSO_LINE_DASH_STYLE
+
+        # Use blank slide layout to have full control
+        slide = prs.slides.add_slide(prs.slide_layouts[6])
 
         # Set slide background to match web app (Tailwind gray-800: RGB(31, 41, 55))
         background = slide.background
@@ -106,30 +108,103 @@ class RoadmapExporter:
         fill.solid()
         fill.fore_color.rgb = RGBColor(31, 41, 55)
 
-        title = slide.shapes.title
-        subtitle = slide.placeholders[1]
+        # Title
+        title_box = slide.shapes.add_textbox(
+            Inches(1), Inches(3), Inches(18), Inches(1.5)
+        )
+        title_frame = title_box.text_frame
+        title_para = title_frame.paragraphs[0]
+        title_para.text = "Product Roadmap"
+        title_para.font.size = Pt(54)
+        title_para.font.bold = True
+        title_para.font.color.rgb = RGBColor(243, 244, 246)  # gray-100
+        title_para.alignment = PP_ALIGN.CENTER
 
-        title.text = "Product Roadmap"
+        # Subtitle
+        subtitle_box = slide.shapes.add_textbox(
+            Inches(1), Inches(4.8), Inches(18), Inches(1)
+        )
+        subtitle_frame = subtitle_box.text_frame
 
-        # Style title text
-        title.text_frame.paragraphs[0].font.color.rgb = RGBColor(
-            243, 244, 246
-        )  # gray-100
+        # Format quarters for subtitle
+        start_quarter = self._format_quarter_long(quarters[0])
+        end_quarter = self._format_quarter_long(quarters[-1])
 
-        # Format dates for subtitle
-        start_month = self._format_month_long(months[0])
-        end_month = self._format_month_long(months[-1])
+        subtitle_para = subtitle_frame.paragraphs[0]
+        subtitle_para.text = f"{start_quarter} - {end_quarter}"
+        subtitle_para.font.size = Pt(27)
+        subtitle_para.font.color.rgb = RGBColor(209, 213, 219)  # gray-300
+        subtitle_para.alignment = PP_ALIGN.CENTER
 
-        subtitle.text = f"{start_month} - {end_month}\nGenerated: {datetime.now().strftime('%B %d, %Y')}"
+        # Generated date
+        date_para = subtitle_frame.add_paragraph()
+        date_para.text = f"Generated: {datetime.now().strftime('%B %d, %Y')}"
+        date_para.font.size = Pt(21)
+        date_para.font.color.rgb = RGBColor(209, 213, 219)  # gray-300
+        date_para.alignment = PP_ALIGN.CENTER
 
-        # Style subtitle text
-        for paragraph in subtitle.text_frame.paragraphs:
-            paragraph.font.color.rgb = RGBColor(209, 213, 219)  # gray-300
+        # Add legend at bottom (50% larger)
+        legend_top = Inches(7.5)
+        legend_left = Inches(5)
+
+        # Legend title
+        legend_title_box = slide.shapes.add_textbox(
+            legend_left, legend_top, Inches(10), Inches(0.6)
+        )
+        legend_title_frame = legend_title_box.text_frame
+        legend_title_para = legend_title_frame.paragraphs[0]
+        legend_title_para.text = "Legend:"
+        legend_title_para.font.size = Pt(24)
+        legend_title_para.font.bold = True
+        legend_title_para.font.color.rgb = RGBColor(200, 200, 200)
+
+        # Signed off example (solid border)
+        signoff_shape = slide.shapes.add_shape(
+            MSO_SHAPE.ROUNDED_RECTANGLE,
+            legend_left + Inches(0.3),
+            legend_top + Inches(0.75),
+            Inches(2.4),
+            Inches(0.6),
+        )
+        signoff_shape.fill.solid()
+        signoff_shape.fill.fore_color.rgb = RGBColor(29, 78, 216)  # blue-700
+        signoff_shape.fill.transparency = 0.5
+        signoff_shape.line.color.rgb = RGBColor(29, 78, 216)
+        signoff_shape.line.width = Pt(2.25)
+
+        signoff_text = signoff_shape.text_frame
+        signoff_para = signoff_text.paragraphs[0]
+        signoff_para.text = "Signed Off"
+        signoff_para.font.size = Pt(18)
+        signoff_para.font.color.rgb = RGBColor(96, 165, 250)  # blue-400
+        signoff_para.alignment = PP_ALIGN.CENTER
+
+        # Pending estimation example (dashed border with hourglass)
+        pending_shape = slide.shapes.add_shape(
+            MSO_SHAPE.ROUNDED_RECTANGLE,
+            legend_left + Inches(5.5),
+            legend_top + Inches(0.75),
+            Inches(3.3),
+            Inches(0.6),
+        )
+        pending_shape.fill.solid()
+        pending_shape.fill.fore_color.rgb = RGBColor(126, 34, 206)  # purple-700
+        pending_shape.fill.transparency = 0.5
+        pending_shape.line.color.rgb = RGBColor(126, 34, 206)
+        pending_shape.line.width = Pt(3)
+        pending_shape.line.dash_style = MSO_LINE_DASH_STYLE.DASH
+
+        pending_text = pending_shape.text_frame
+        pending_para = pending_text.paragraphs[0]
+        pending_para.text = "⏳ Pending Estimation"
+        pending_para.font.size = Pt(18)
+        pending_para.font.color.rgb = RGBColor(192, 132, 252)  # purple-400
+        pending_para.alignment = PP_ALIGN.CENTER
 
     def _create_timeline_slide(
-        self, prs, months_chunk, chunk_index, total_chunks, features_with_dates
+        self, prs, quarters_chunk, chunk_index, total_chunks, features_with_dates
     ):
-        """Create a timeline slide for a chunk of months"""
+        """Create a timeline slide for a chunk of quarters"""
         # Use blank slide layout
         slide = prs.slides.add_slide(prs.slide_layouts[6])
 
@@ -139,11 +214,11 @@ class RoadmapExporter:
         fill.solid()
         fill.fore_color.rgb = RGBColor(31, 41, 55)
 
-        # Add title
-        title_left = Inches(0.5)
-        title_top = Inches(0.3)
-        title_width = Inches(12.33)
-        title_height = Inches(0.6)
+        # Add title (all dimensions 50% larger)
+        title_left = Inches(0.75)
+        title_top = Inches(0.45)
+        title_width = Inches(18.5)
+        title_height = Inches(0.9)
 
         title_box = slide.shapes.add_textbox(
             title_left, title_top, title_width, title_height
@@ -151,41 +226,41 @@ class RoadmapExporter:
         title_frame = title_box.text_frame
         title_para = title_frame.paragraphs[0]
 
-        start_month = self._format_month_long(months_chunk[0])
-        end_month = self._format_month_long(months_chunk[-1])
-        title_text = f"Product Roadmap: {start_month} - {end_month}"
+        start_quarter = self._format_quarter_long(quarters_chunk[0])
+        end_quarter = self._format_quarter_long(quarters_chunk[-1])
+        title_text = f"Product Roadmap: {start_quarter} - {end_quarter}"
 
         if total_chunks > 1:
             title_text += f" (Slide {chunk_index + 1} of {total_chunks})"
 
         title_para.text = title_text
-        title_para.font.size = Pt(20)
+        title_para.font.size = Pt(36)
         title_para.font.bold = True
         title_para.font.color.rgb = RGBColor(255, 255, 255)
 
-        # Calculate dimensions
-        category_col_width = Inches(1.8)
-        timeline_start_left = Inches(0.5) + category_col_width
-        timeline_width = Inches(12.33) - category_col_width
-        month_width = timeline_width / len(months_chunk)
+        # Calculate dimensions (all 50% larger)
+        category_col_width = Inches(2.7)
+        timeline_start_left = Inches(0.75) + category_col_width
+        timeline_width = Inches(18.5) - category_col_width
+        quarter_width = timeline_width / len(quarters_chunk)
 
-        header_top = Inches(1.1)
-        header_height = Inches(0.4)
+        header_top = Inches(1.65)
+        header_height = Inches(0.6)
 
-        # Draw month headers
-        for i, month in enumerate(months_chunk):
-            month_left = timeline_start_left + (i * month_width)
+        # Draw quarter headers
+        for i, quarter in enumerate(quarters_chunk):
+            quarter_left = timeline_start_left + (i * quarter_width)
 
-            month_box = slide.shapes.add_textbox(
-                month_left, header_top, month_width, header_height
+            quarter_box = slide.shapes.add_textbox(
+                quarter_left, header_top, quarter_width, header_height
             )
-            month_frame = month_box.text_frame
-            month_para = month_frame.paragraphs[0]
-            month_para.text = self._format_month_short(month)
-            month_para.font.size = Pt(11)
-            month_para.font.bold = True
-            month_para.font.color.rgb = RGBColor(200, 200, 200)
-            month_para.alignment = PP_ALIGN.CENTER
+            quarter_frame = quarter_box.text_frame
+            quarter_para = quarter_frame.paragraphs[0]
+            quarter_para.text = self._format_quarter_short(quarter)
+            quarter_para.font.size = Pt(21)
+            quarter_para.font.bold = True
+            quarter_para.font.color.rgb = RGBColor(200, 200, 200)
+            quarter_para.alignment = PP_ALIGN.CENTER
 
         # Get categories with features in this timeline
         categories_with_features = []
@@ -193,29 +268,29 @@ class RoadmapExporter:
             cat_features = [
                 f
                 for f in features_with_dates
-                if f["category_id"] == cat.id and f["release_date"] in months_chunk
+                if f["category_id"] == cat.id and f["release_quarter"] in quarters_chunk
             ]
             if cat_features or any(
                 f["category_id"] == cat.id for f in features_with_dates
             ):
                 categories_with_features.append(cat)
 
-        # Draw category rows and features
-        row_height = Inches(0.9)
-        content_top = header_top + header_height + Inches(0.1)
+        # Draw category rows and features (all 50% larger)
+        row_height = Inches(1.35)
+        content_top = header_top + header_height + Inches(0.15)
 
         for cat_index, category in enumerate(categories_with_features):
             row_top = content_top + (cat_index * row_height)
 
             # Category name
             cat_box = slide.shapes.add_textbox(
-                Inches(0.5), row_top, category_col_width - Inches(0.1), row_height
+                Inches(0.75), row_top, category_col_width - Inches(0.15), row_height
             )
             cat_frame = cat_box.text_frame
             cat_frame.word_wrap = True
             cat_para = cat_frame.paragraphs[0]
             cat_para.text = category.name
-            cat_para.font.size = Pt(10)
+            cat_para.font.size = Pt(18)
             cat_para.font.bold = True
             cat_para.font.color.rgb = RGBColor(200, 200, 200)
 
@@ -224,37 +299,37 @@ class RoadmapExporter:
             fill_color = self.color_map[color_name]
             text_color = self.text_color_map[color_name]
 
-            # Draw features for each month
-            for month_index, month in enumerate(months_chunk):
-                month_features = [
+            # Draw features for each quarter
+            for quarter_index, quarter in enumerate(quarters_chunk):
+                quarter_features = [
                     f
                     for f in features_with_dates
-                    if f["category_id"] == category.id and f["release_date"] == month
+                    if f["category_id"] == category.id and f["release_quarter"] == quarter
                 ]
 
-                month_left = timeline_start_left + (month_index * month_width)
+                quarter_left = timeline_start_left + (quarter_index * quarter_width)
 
-                # Stack features vertically if multiple in same month
+                # Stack features vertically if multiple in same quarter
                 feature_height = (
-                    Inches(0.65) if len(month_features) <= 1 else Inches(0.4)
+                    Inches(0.975) if len(quarter_features) <= 1 else Inches(0.6)
                 )
-                feature_spacing = Inches(0.05)
+                feature_spacing = Inches(0.075)
 
                 for feat_index, feature in enumerate(
-                    month_features[:3]
+                    quarter_features[:3]
                 ):  # Max 3 features per cell
                     feature_top = (
                         row_top
-                        + Inches(0.1)
+                        + Inches(0.15)
                         + (feat_index * (feature_height + feature_spacing))
                     )
 
                     self._add_feature_card(
                         slide,
                         feature,
-                        month_left + Inches(0.05),
+                        quarter_left + Inches(0.075),
                         feature_top,
-                        month_width - Inches(0.1),
+                        quarter_width - Inches(0.15),
                         feature_height,
                         fill_color,
                         text_color,
@@ -264,6 +339,8 @@ class RoadmapExporter:
         self, slide, feature, left, top, width, height, fill_color, text_color
     ):
         """Add a feature card to the slide"""
+        from pptx.enum.dml import MSO_LINE_DASH_STYLE
+
         # Add rounded rectangle
         shape = slide.shapes.add_shape(
             MSO_SHAPE.ROUNDED_RECTANGLE, left, top, width, height
@@ -274,43 +351,49 @@ class RoadmapExporter:
         shape.fill.fore_color.rgb = fill_color
         shape.fill.transparency = 0.5  # 50% transparency to match web appearance
 
-        # Set border color (border-{color}-700/50)
+        # Check if pending estimation (no engineering signoff)
+        is_pending = not feature.get("engineering_signoff", True)
+
+        # Set border color and style
         shape.line.color.rgb = fill_color
-        shape.line.width = Pt(1.5)
         shape.line.transparency = 0.3
 
-        # Add text
+        if is_pending:
+            # Dashed border for pending estimation (50% thicker)
+            shape.line.width = Pt(3)
+            shape.line.dash_style = MSO_LINE_DASH_STYLE.DASH
+        else:
+            # Solid border for signed off (50% thicker)
+            shape.line.width = Pt(2.25)
+
+        # Add text (all margins 50% larger)
         text_frame = shape.text_frame
         text_frame.word_wrap = True
-        text_frame.margin_left = Pt(4)
-        text_frame.margin_right = Pt(4)
-        text_frame.margin_top = Pt(3)
-        text_frame.margin_bottom = Pt(3)
+        text_frame.margin_left = Pt(6)
+        text_frame.margin_right = Pt(6)
+        text_frame.margin_top = Pt(4.5)
+        text_frame.margin_bottom = Pt(4.5)
 
         # Clear default paragraph
         text_frame.clear()
 
-        # Title (bold) - use text_color to match web (text-{color}-400)
+        # Title (bold) - use text_color to match web (text-{color}-400) - 50% larger font
+        # Add hourglass emoji for pending estimation
         p_title = text_frame.paragraphs[0]
-        p_title.text = feature["title"][:30] + (
+        title_prefix = "⏳ " if is_pending else ""
+        title_text = feature["title"][:30] + (
             "..." if len(feature["title"]) > 30 else ""
         )
-        p_title.font.size = Pt(9)
+        p_title.text = title_prefix + title_text
+        p_title.font.size = Pt(18)
         p_title.font.bold = True
         p_title.font.color.rgb = text_color
 
-        # ID (small, gray)
-        p_id = text_frame.add_paragraph()
-        p_id.text = feature["id"]
-        p_id.font.size = Pt(7)
-        p_id.font.color.rgb = RGBColor(180, 180, 180)
-
-        # Priority and Complexity
+        # Priority only (no ID, no T-shirt sizing) - 50% larger font
         p_meta = text_frame.add_paragraph()
         priority_letter = feature["priority"][0]  # H, M, or L
-        complexity = feature["engineering_complexity"]
-        p_meta.text = f"{priority_letter} • {complexity}"
-        p_meta.font.size = Pt(7)
+        p_meta.text = f"{priority_letter}"
+        p_meta.font.size = Pt(14)
         p_meta.font.bold = True
 
         # Color code priority
@@ -320,73 +403,90 @@ class RoadmapExporter:
         p_meta.font.color.rgb = priority_color
 
     def _get_features_with_dates(self):
-        """Extract all features with release dates and category info"""
+        """Extract all features with release dates and category info, converting to quarters"""
         features = []
         for category in self.categories:
             for feature in category.features:
                 if feature.release_date:
+                    # Convert YYYY-MM to YYYY-QN
+                    release_quarter = self._date_to_quarter(feature.release_date)
                     features.append(
                         {
                             "id": feature.id,
                             "title": feature.title,
                             "priority": feature.priority.value,
-                            "engineering_complexity": feature.engineering_complexity.value,
                             "release_date": feature.release_date,
+                            "release_quarter": release_quarter,
                             "category_id": category.id,
                             "category_name": category.name,
+                            "engineering_signoff": feature.engineering_signoff,
                         }
                     )
         return features
 
-    def _generate_month_range(self, features):
-        """Generate month range from earliest to latest + 2 months"""
+    def _generate_quarter_range(self, features):
+        """Generate quarter range from earliest to latest + 1 quarter"""
         if not features:
             return []
 
-        dates = [f["release_date"] for f in features]
-        dates.sort()
+        quarters = [f["release_quarter"] for f in features]
+        quarters_set = sorted(set(quarters))
 
-        # Parse start and end dates
-        start_year, start_month = map(int, dates[0].split("-"))
-        end_year, end_month = map(int, dates[-1].split("-"))
+        if not quarters_set:
+            return []
 
-        # Add 2 months to end date
-        end_month += 2
-        if end_month > 12:
-            end_month -= 12
+        # Parse start and end quarters
+        start_year, start_q = self._parse_quarter(quarters_set[0])
+        end_year, end_q = self._parse_quarter(quarters_set[-1])
+
+        # Add 1 quarter to end
+        end_q += 1
+        if end_q > 4:
+            end_q = 1
             end_year += 1
 
-        # Generate all months between start and end
-        months = []
-        current_year, current_month = start_year, start_month
+        # Generate all quarters between start and end
+        quarters_list = []
+        current_year, current_q = start_year, start_q
 
         while (current_year < end_year) or (
-            current_year == end_year and current_month <= end_month
+            current_year == end_year and current_q <= end_q
         ):
-            months.append(f"{current_year}-{current_month:02d}")
-            current_month += 1
-            if current_month > 12:
-                current_month = 1
+            quarters_list.append(f"{current_year}-Q{current_q}")
+            current_q += 1
+            if current_q > 4:
+                current_q = 1
                 current_year += 1
 
-        return months
+        return quarters_list
 
-    def _chunk_timeline(self, months, chunk_size=6):
+    def _chunk_timeline(self, quarters, chunk_size=4):
         """Split timeline into chunks for multiple slides"""
-        for i in range(0, len(months), chunk_size):
-            yield months[i : i + chunk_size]
+        for i in range(0, len(quarters), chunk_size):
+            yield quarters[i : i + chunk_size]
 
-    def _format_month_short(self, month_str):
-        """Format YYYY-MM to 'Mon YY' (e.g., 'Jan 24')"""
-        year, month = month_str.split("-")
-        date = datetime(int(year), int(month), 1)
-        return date.strftime("%b %y")
+    def _date_to_quarter(self, date_str):
+        """Convert YYYY-MM to YYYY-QN"""
+        year, month = date_str.split("-")
+        month_num = int(month)
+        quarter = (month_num - 1) // 3 + 1  # Math.ceil equivalent
+        return f"{year}-Q{quarter}"
 
-    def _format_month_long(self, month_str):
-        """Format YYYY-MM to 'Month YYYY' (e.g., 'January 2024')"""
-        year, month = month_str.split("-")
-        date = datetime(int(year), int(month), 1)
-        return date.strftime("%B %Y")
+    def _parse_quarter(self, quarter_str):
+        """Parse YYYY-QN to (year, quarter_num)"""
+        year, q = quarter_str.split("-Q")
+        return int(year), int(q)
+
+    def _format_quarter_short(self, quarter_str):
+        """Format YYYY-QN to 'QN YY' (e.g., 'Q1 24')"""
+        year, q = quarter_str.split("-Q")
+        year_short = year[-2:]
+        return f"Q{q} {year_short}"
+
+    def _format_quarter_long(self, quarter_str):
+        """Format YYYY-QN to 'QN YYYY' (e.g., 'Q1 2024')"""
+        year, q = quarter_str.split("-Q")
+        return f"Q{q} {year}"
 
 
 class PRDExporter:
@@ -403,15 +503,17 @@ class PRDExporter:
         wb = Workbook()
         wb.remove(wb.active)  # Remove default sheet
 
-        # Create summary sheet
-        summary_sheet = wb.create_sheet("PRD Summary")
-        self._create_summary_sheet(summary_sheet)
-
-        # Create a sheet for each category
+        # Create a sheet for each category (no summary sheet for backup/restore)
+        has_sheets = False
         for category in self.categories:
             if category.features:
                 sheet = wb.create_sheet(self._sanitize_sheet_name(category.name))
                 self._create_category_sheet(sheet, category)
+                has_sheets = True
+
+        # If no sheets were created, raise an error
+        if not has_sheets:
+            raise ValueError("No features found to export. Add features to categories before exporting.")
 
         # Save to BytesIO buffer
         buffer = BytesIO()

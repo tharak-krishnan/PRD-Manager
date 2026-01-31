@@ -75,11 +75,15 @@ The `conftest.py` file provides the following fixtures:
 ### Backend Test Coverage
 
 - **Models**: User, Category, Feature creation, validation, relationships
-- **Authentication**: Registration, login, JWT token handling
-- **Categories**: CRUD operations, cascade deletions
-- **Features**: CRUD operations, validation
-- **Export**: PowerPoint, Excel, Word document generation
+- **Authentication**: Registration, login, JWT token handling, role-based access control
+- **Categories**: CRUD operations, cascade deletions, multi-project support
+- **Features**: CRUD operations, validation, engineering signoff
+- **Export Services**:
+  - PowerPoint: Quarterly roadmap generation, pending estimation indicators, slide sizing (20" × 11.25")
+  - Excel: Category sheets, feature metadata
+  - Word: Table of contents, formatted feature tables
 - **Import**: Excel file parsing and data loading
+- **Integration**: Multi-project workflows, permission checks
 
 ## Frontend Testing (React/TypeScript)
 
@@ -165,6 +169,57 @@ describe('MyComponent', () => {
   });
 });
 ```
+
+## Export Feature Testing
+
+The export functionality has dedicated test coverage:
+
+### PowerPoint (PPTX) Export Tests
+
+```bash
+# Run all export service tests
+pytest backend/tests/test_services_export.py
+
+# Run specific export tests
+pytest backend/tests/test_services_export.py::TestRoadmapExporter::test_generate_pptx
+pytest backend/tests/test_services_export.py::TestRoadmapExporter::test_pending_estimation_indicator
+```
+
+**Coverage:**
+- Quarterly timeline generation (Q1, Q2, Q3, Q4)
+- Date to quarter conversion (YYYY-MM → YYYY-QN)
+- Quarter range generation and chunking (4 quarters per slide)
+- Pending estimation indicators (dashed borders, ⏳ emoji)
+- Slide dimensions (20" × 11.25" - 50% larger than standard)
+- Legend inclusion on title slide
+- Format helpers (short: "Q1 24", long: "Q1 2024")
+
+### Excel/Word Export Tests
+
+```bash
+# Test PRD export functionality
+pytest backend/tests/test_services_export.py::TestPRDExporter
+```
+
+**Coverage:**
+- Excel workbook structure (category sheets, no summary)
+- Word document formatting (TOC, tables)
+- Empty category handling
+- Metadata preservation
+
+### Export Route Tests
+
+```bash
+# Test export API endpoints
+pytest backend/tests/test_routes_export.py
+```
+
+**Coverage:**
+- Authentication required for exports
+- Error handling (no features with dates, no categories)
+- Content type headers
+- File format validation
+- Import/export round-trip
 
 ## Continuous Integration
 

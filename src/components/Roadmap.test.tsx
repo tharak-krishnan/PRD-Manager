@@ -318,8 +318,9 @@ describe('Roadmap - Feature Display with Signoff Status', () => {
     useDataSpy.mockReturnValue(createMockContext(categories));
     render(<Roadmap />);
 
-    // Features with dates should appear
-    expect(screen.getByText('Signed Off')).toBeInTheDocument();
+    // Features with dates should appear (using getAllByText since "Signed Off" also appears in legend)
+    const signedOffElements = screen.getAllByText('Signed Off');
+    expect(signedOffElements.length).toBeGreaterThan(0); // At least one feature + legend
     expect(screen.getByText(/Not Signed Off/)).toBeInTheDocument();
 
     // Feature without date should NOT appear

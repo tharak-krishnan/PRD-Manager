@@ -172,4 +172,23 @@ describe('FeatureTable - Engineer Assignment Display', () => {
     expect(screen.getByText('engineer')).toBeInTheDocument();
     expect(screen.queryByText('User #3')).not.toBeInTheDocument();
   });
+
+  it('should render feature titles as links to detail pages', async () => {
+    render(
+      <BrowserRouter>
+        <FeatureTable categoryId="1" />
+      </BrowserRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Assigned Feature')).toBeInTheDocument();
+    });
+
+    // Feature titles should be links
+    const assignedFeatureLink = screen.getByText('Assigned Feature').closest('a');
+    const unassignedFeatureLink = screen.getByText('Unassigned Feature').closest('a');
+
+    expect(assignedFeatureLink).toHaveAttribute('href', '/feature/1.1');
+    expect(unassignedFeatureLink).toHaveAttribute('href', '/feature/1.2');
+  });
 });

@@ -1,7 +1,8 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { useData, Feature, Priority, TShirtSize } from '../context/DataContext';
 import { useAuth } from '../context/AuthContext';
-import { PlusIcon, Trash2Icon, CheckIcon, XIcon, EditIcon } from 'lucide-react';
+import { PlusIcon, Trash2Icon, CheckIcon, XIcon } from 'lucide-react';
 import Pagination from './Pagination';
 import FeatureEditModal from './FeatureEditModal';
 import { apiClient } from '../services/api';
@@ -64,13 +65,6 @@ const FeatureTable: React.FC<FeatureTableProps> = ({ categoryId }) => {
     setIsModalOpen(true);
   };
 
-  const handleOpenEditModal = (feature: Feature) => {
-    if (!canEditFeature(feature)) return;
-    setEditingFeature(feature);
-    setIsNewFeature(false);
-    setIsModalOpen(true);
-  };
-
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setEditingFeature(null);
@@ -80,8 +74,6 @@ const FeatureTable: React.FC<FeatureTableProps> = ({ categoryId }) => {
   const handleSaveFeature = (featureData: Omit<Feature, 'id'>) => {
     if (isNewFeature) {
       addFeature(categoryId, featureData);
-    } else if (editingFeature) {
-      updateFeature(categoryId, editingFeature.id, featureData);
     }
   };
 
@@ -162,9 +154,13 @@ const FeatureTable: React.FC<FeatureTableProps> = ({ categoryId }) => {
                       {feature.id}
                     </td>
                     <td className="px-4 py-3 border-b-0 text-gray-300">
-                      <div className="max-h-20 overflow-auto text-sm" title={feature.title}>
+                      <Link
+                        to={`/feature/${feature.id}`}
+                        className="max-h-20 overflow-auto text-sm block text-blue-400 hover:text-blue-300 transition-colors"
+                        title={feature.title}
+                      >
                         {feature.title}
-                      </div>
+                      </Link>
                     </td>
                     <td className="px-4 py-3 border-b-0 w-28">
                       <span
@@ -185,15 +181,6 @@ const FeatureTable: React.FC<FeatureTableProps> = ({ categoryId }) => {
                     </td>
                     <td className="px-4 py-3 border-b-0 w-24">
                       <div className="flex justify-center space-x-1">
-                        {canEditFeature(feature) && (
-                          <button
-                            onClick={() => handleOpenEditModal(feature)}
-                            className="p-1 text-blue-400 hover:text-blue-300 transition-colors"
-                            title="Edit feature"
-                          >
-                            <EditIcon size={16} />
-                          </button>
-                        )}
                         {canDeleteFeature(user.role) && (
                           <button
                             onClick={() => deleteFeature(categoryId, feature.id)}

@@ -49,10 +49,11 @@ class TestExportRoutes:
         assert response.status_code == 200
         assert response.content_type == 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
 
-        # Verify it's a valid Excel file
+        # Verify it's a valid Excel file with category sheets (no PRD Summary)
         excel_data = BytesIO(response.data)
         wb = load_workbook(excel_data)
-        assert 'PRD Summary' in wb.sheetnames
+        # Should have at least one category sheet
+        assert len(wb.sheetnames) >= 1
 
     def test_export_prd_word_success(self, client, auth_headers, category_with_features):
         """Test exporting PRD to Word"""

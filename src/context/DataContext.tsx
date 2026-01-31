@@ -117,6 +117,13 @@ export const DataProvider: React.FC<{
     }
   }, []);
 
+  // Auto-select first project if none selected
+  useEffect(() => {
+    if (projects.length > 0 && selectedProjectId === null) {
+      setSelectedProjectId(projects[0].id);
+    }
+  }, [projects, selectedProjectId]);
+
   // Fetch categories when project changes
   useEffect(() => {
     const token = localStorage.getItem('access_token');

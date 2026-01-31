@@ -10,11 +10,14 @@ PRD Manager helps product and engineering teams organize, track, and visualize p
 - ✅ User authentication with JWT tokens
 - ✅ Category management with CRUD operations
 - ✅ Feature tracking with 9 metadata fields
-- ✅ Product roadmap timeline visualization
-- ✅ Persistent SQLite database
+- ✅ Product roadmap timeline visualization (quarterly)
+- ✅ Export roadmap to PowerPoint (PPTX) with pending estimation indicators
+- ✅ Export PRD to Excel (XLSX) and Word (DOCX)
+- ✅ Persistent PostgreSQL database
 - ✅ REST API backend
 - ✅ Docker containerization
 - ✅ Pre-seeded with 23 sample features
+- ✅ Role-based access control (Admin, Product Manager, Engineer, Viewer)
 
 ## Quick Start
 
@@ -72,8 +75,44 @@ npm run dev
 
 - **Backend**: Flask 3.0, SQLAlchemy, Flask-JWT-Extended, Flask-CORS
 - **Frontend**: React 18, TypeScript, Axios, React Router, Tailwind CSS
-- **Database**: SQLite (development)
+- **Database**: PostgreSQL 15
 - **Containerization**: Docker + Docker Compose
+- **Export Libraries**: python-pptx, openpyxl, python-docx
+
+## Export Features
+
+PRD Manager provides comprehensive export capabilities for sharing roadmaps and product requirements:
+
+### Roadmap Export (PowerPoint)
+
+Export your product roadmap to a professional PowerPoint presentation with:
+
+- **Quarterly Timeline View** - Features organized by quarter (Q1, Q2, Q3, Q4)
+- **Pending Estimation Indicators** - Dashed borders and ⏳ emoji for features awaiting engineering signoff
+- **Color-Coded Categories** - Each category has distinct colors matching the web UI
+- **Priority Indicators** - High/Medium/Low priority badges (H/M/L)
+- **Legend** - Clear explanation of signed off vs. pending estimation
+- **Large Format** - 50% larger slides (20" × 11.25") for better readability
+- **Multiple Slides** - Automatically splits into 4-quarter chunks for longer timelines
+
+**Visual Indicators:**
+- Solid border = Signed off by engineering
+- Dashed border + ⏳ = Pending estimation
+
+### PRD Export (Excel & Word)
+
+Export complete Product Requirements Documents with all feature details:
+
+**Excel Export:**
+- One sheet per category
+- Complete feature metadata (ID, Title, Priority, Description, KPI, Customer, Engineering Comments, Signoff Status, Complexity, Release Date)
+- Formatted headers and color coding
+
+**Word Export:**
+- Table of contents
+- Professional document formatting
+- Organized by category with complete feature tables
+- Optimized for printing and PDF conversion
 
 ## Documentation
 
@@ -82,11 +121,17 @@ npm run dev
 
 ## Features
 
-- User authentication with JWT
+- User authentication with JWT and role-based access control
+- Multi-project support with project selector
 - Category and feature CRUD operations
-- Product roadmap visualization
+- Product roadmap visualization (quarterly timeline)
+- Export to PowerPoint, Excel, and Word formats
+- Import from Excel for bulk feature updates
+- Feature detail pages with comprehensive metadata
+- My Tasks view for engineers
+- User management (admin only)
 - 6 pre-seeded categories with 23 features
-- Dark theme UI with Tailwind CSS
+- Dark theme UI with Tailwind CSS and glassmorphism effects
 
 ---
 

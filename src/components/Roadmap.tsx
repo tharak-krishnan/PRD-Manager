@@ -24,8 +24,16 @@ const Roadmap: React.FC = () => {
       categoryName: category.name
     })));
   }, [categories]);
-  // Get all unique months in the date range
-  const months = useMemo(() => {
+  // Helper function to convert YYYY-MM to quarter (YYYY-Q1, YYYY-Q2, etc.)
+  const getQuarterFromDate = (dateStr: string): string => {
+    const [year, month] = dateStr.split('-');
+    const monthNum = parseInt(month);
+    const quarter = Math.ceil(monthNum / 3);
+    return `${year}-Q${quarter}`;
+  };
+
+  // Get all unique quarters in the date range
+  const quarters = useMemo(() => {
     if (featuresWithDates.length === 0) return [];
     const dates = featuresWithDates.map(f => f.releaseDate);
     const sortedDates = [...dates].sort();
@@ -34,37 +42,38 @@ const Roadmap: React.FC = () => {
     // Get the earliest and latest dates
     const startDate = new Date(sortedDates[0]);
     const endDate = new Date(sortedDates[sortedDates.length - 1]);
-    // Add 2 months to the end date for better visualization
-    endDate.setMonth(endDate.getMonth() + 2);
-    const result = [];
+    // Add 1 quarter to the end date for better visualization
+    endDate.setMonth(endDate.getMonth() + 3);
+    const result = new Set<string>();
     const currentDate = new Date(startDate);
-    // Generate all months between start and end dates
+    // Generate all quarters between start and end dates
     while (currentDate <= endDate) {
       const year = currentDate.getFullYear();
       const month = currentDate.getMonth() + 1;
-      result.push(`${year}-${month.toString().padStart(2, '0')}`);
-      currentDate.setMonth(currentDate.getMonth() + 1);
+      const quarter = `${year}-${month.toString().padStart(2, '0')}`;
+      result.add(getQuarterFromDate(quarter));
+      currentDate.setMonth(currentDate.getMonth() + 3);
     }
-    return result;
+    return Array.from(result).sort();
   }, [featuresWithDates]);
-  // Group features by month
-  const featuresByMonth = useMemo(() => {
-    return months.reduce((acc, month) => {
-      acc[month] = featuresWithDates.filter(feature => feature.releaseDate === month);
+
+  // Group features by quarter
+  const featuresByQuarter = useMemo(() => {
+    return quarters.reduce((acc, quarter) => {
+      acc[quarter] = featuresWithDates.filter(feature =>
+        getQuarterFromDate(feature.releaseDate) === quarter
+      );
       return acc;
     }, {} as Record<string, Array<Feature & {
       categoryId: string;
       categoryName: string;
     }>>);
-  }, [months, featuresWithDates]);
-  // Format month for display
-  const formatMonth = (monthStr: string) => {
-    const [year, month] = monthStr.split('-');
-    const date = new Date(parseInt(year), parseInt(month) - 1);
-    return date.toLocaleDateString('en-US', {
-      month: 'short',
-      year: 'numeric'
-    });
+  }, [quarters, featuresWithDates]);
+
+  // Format quarter for display
+  const formatQuarter = (quarterStr: string) => {
+    const [year, quarter] = quarterStr.split('-');
+    return `${quarter} ${year}`;
   };
 
   // Handle PowerPoint export
@@ -92,7 +101,7 @@ const Roadmap: React.FC = () => {
     }
   };
 
-  if (months.length === 0) {
+  if (quarters.length === 0) {
     return <div className="w-full p-8 text-center bg-gray-800 rounded-lg shadow-lg border border-gray-700">
         <h2 className="text-xl font-semibold mb-4 text-gray-100">Roadmap</h2>
         <p className="text-gray-400">
@@ -104,9 +113,9 @@ const Roadmap: React.FC = () => {
       <div className="mb-4">
         <button
           onClick={handleExport}
-          disabled={isExporting || months.length === 0}
+          disabled={isExporting || quarters.length === 0}
           className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-            isExporting || months.length === 0
+            isExporting || quarters.length === 0
               ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
               : 'bg-blue-600 text-white hover:bg-blue-700'
           }`}
@@ -160,18 +169,18 @@ const Roadmap: React.FC = () => {
         <div className="flex border-b border-gray-700 pb-3">
           <div className="w-48 flex-shrink-0"></div>
           <div className="flex-1 flex">
-            {months.map(month => <div key={month} className="flex-1 text-center text-sm font-medium text-gray-300">
-                {formatMonth(month)}
+            {quarters.map(quarter => <div key={quarter} className="flex-1 text-center text-sm font-medium text-gray-300">
+                {formatQuarter(quarter)}
               </div>)}
           </div>
         </div>
         {/* Timeline content */}
         <div className="mt-5 relative">
-          {/* Vertical month separators */}
+          {/* Vertical quarter separators */}
           <div className="absolute inset-0 flex pointer-events-none">
             <div className="w-48 flex-shrink-0"></div>
             <div className="flex-1 flex">
-              {months.map((month) => <div key={month} className="flex-1 border-r border-gray-700/50 h-full"></div>)}
+              {quarters.map((quarter) => <div key={quarter} className="flex-1 border-r border-gray-700/50 h-full"></div>)}
             </div>
           </div>
           {/* Features by category */}
@@ -185,19 +194,27 @@ const Roadmap: React.FC = () => {
                   </span>
                 </div>
                 <div className="flex-1 flex">
-                  {months.map(month => {
-                const featuresInMonth = featuresByMonth[month]?.filter(f => f.categoryId === category.id) || [];
-                return <div key={month} className="flex-1 px-1">
-                        {featuresInMonth.map(feature => {
+                  {quarters.map(quarter => {
+                const featuresInQuarter = featuresByQuarter[quarter]?.filter(f => f.categoryId === category.id) || [];
+                return <div key={quarter} className="flex-1 px-1 overflow-hidden">
+                        {featuresInQuarter.map(feature => {
                       // Use dotted border for features without engineering signoff
                       const borderStyle = feature.engineeringSignoff ? 'border' : 'border-dashed border-2';
                       const titlePrefix = feature.engineeringSignoff ? '' : '⏳ ';
-                      return <div key={feature.id} className={`mb-2 p-2 rounded ${borderStyle} text-xs ${categoryColors[category.id]}`} title={`${feature.engineeringSignoff ? 'Signed Off' : 'Pending Estimation'}: ${feature.title} (${feature.id})`}>
-                              <div className="font-medium truncate">
+                      // Priority colors
+                      const priorityColor = feature.priority === 'High'
+                        ? 'text-red-400'
+                        : feature.priority === 'Medium'
+                        ? 'text-yellow-400'
+                        : 'text-green-400';
+                      return <div key={feature.id} className={`mb-2 p-2 rounded ${borderStyle} text-xs ${categoryColors[category.id]} w-full`} title={`${feature.engineeringSignoff ? 'Signed Off' : 'Pending Estimation'}: ${feature.title} - ${feature.priority} Priority`}>
+                              <div className="font-medium truncate w-full">
                                 {titlePrefix}{feature.title}
                               </div>
-                              <div className="text-xs opacity-75">
-                                {feature.id}
+                              <div className="flex justify-end mt-1 w-full">
+                                <div className={`text-xs font-bold ${priorityColor} flex-shrink-0`}>
+                                  {feature.priority[0]}
+                                </div>
                               </div>
                             </div>;
                     })}

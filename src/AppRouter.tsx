@@ -5,6 +5,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Help from "./pages/Help";
 import MyTasks from "./pages/MyTasks";
+import FeatureDetail from "./pages/FeatureDetail";
 import UserManagement from "./components/UserManagement";
 import Layout from "./components/Layout";
 import { AuthProvider, useAuth } from "./context/AuthContext";
@@ -58,6 +59,16 @@ export function AppRouter() {
               <PrivateRoute>
                 <Layout>
                   <MyTasks />
+                </Layout>
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/feature/:featureId"
+            element={
+              <PrivateRoute>
+                <Layout>
+                  <FeatureDetail />
                 </Layout>
               </PrivateRoute>
             }
