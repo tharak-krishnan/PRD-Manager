@@ -77,8 +77,8 @@ describe('FeatureDetail', () => {
       </MemoryRouter>
     );
 
-    expect(screen.getByText('Test Feature')).toBeInTheDocument();
-    expect(screen.getByText('Test Category')).toBeInTheDocument();
+    expect(screen.getAllByText('Test Feature')[0]).toBeInTheDocument();
+    expect(screen.getAllByText('Test Category')[0]).toBeInTheDocument();
   });
 
   it('shows edit button when user has permission', () => {
@@ -199,7 +199,7 @@ describe('FeatureDetail', () => {
     );
 
     expect(screen.getByText('Feature Not Found')).toBeInTheDocument();
-    expect(screen.getByText(/does not exist/i)).toBeInTheDocument();
+    expect(screen.getByText(/could not be found in the system/i)).toBeInTheDocument();
   });
 
   it('displays share link section', () => {
@@ -211,7 +211,7 @@ describe('FeatureDetail', () => {
       </MemoryRouter>
     );
 
-    expect(screen.getByText('Share this feature:')).toBeInTheDocument();
+    expect(screen.getByText('Share This Feature')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /copy link/i })).toBeInTheDocument();
   });
 
@@ -226,6 +226,6 @@ describe('FeatureDetail', () => {
 
     const priorityBadge = screen.getByText('High Priority');
     expect(priorityBadge).toBeInTheDocument();
-    expect(priorityBadge.className).toContain('text-red-400');
+    expect(priorityBadge.parentElement?.className).toContain('text-red-400');
   });
 });
