@@ -19,6 +19,36 @@ PRD Manager helps product and engineering teams organize, track, and visualize p
 - ✅ Pre-seeded with 23 sample features
 - ✅ Role-based access control (Admin, Product Manager, Engineer, Viewer)
 
+## Screenshots
+
+### Login Page
+![Login Page](screenshots/login.png)
+*Secure authentication with JWT tokens*
+
+### Dashboard
+![Dashboard](screenshots/dashboard.png)
+*Main feature management view with category filtering and CRUD operations*
+
+### Product Roadmap
+![Roadmap](screenshots/roadmap.png)
+*Quarterly timeline visualization with color-coded categories and priority indicators*
+
+### Feature Detail
+![Feature Detail](screenshots/feature-detail.png)
+*Comprehensive feature metadata including priorities, complexity, and stakeholder feedback*
+
+### Project Selection
+![Project Selection](screenshots/project-selector.png)
+*Multi-project support with easy project switching*
+
+### My Tasks
+![My Tasks](screenshots/my-tasks.png)
+*Engineer-focused view showing assigned features and pending work*
+
+### User Management
+![User Management](screenshots/user-management.png)
+*Admin interface for managing users and role-based access control*
+
 ## Quick Start
 
 ### Option 1: Docker (Recommended)
