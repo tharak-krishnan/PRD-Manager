@@ -163,6 +163,10 @@ Export complete Product Requirements Documents with all feature details:
 - 6 pre-seeded categories with 23 features
 - Dark theme UI with Tailwind CSS and glassmorphism effects
 
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
 ---
 
 _Originally generated with [Magic Patterns](https://magicpatterns.com) and enhanced with full-stack capabilities_
